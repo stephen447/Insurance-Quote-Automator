@@ -1,6 +1,6 @@
 import asyncio
 from playwright.async_api import Playwright, async_playwright, expect
-import an_post
+import companies.an_post as an_post
 
 # Personal information dictionary
 PERSONAL_INFO = {
