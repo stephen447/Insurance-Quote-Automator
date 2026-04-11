@@ -32,8 +32,7 @@ cd insurance-quote-automator
 2. Install dependencies:
 
 ```bash
-pip install playwright
-playwright install
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -131,13 +130,6 @@ To add support for a new insurance company:
 - **Browser Issues**: Ensure Playwright browsers are installed with `playwright install`
 - **Form Changes**: Insurance websites frequently update their forms - updates may be required
 - **Network Issues**: Check your internet connection if forms fail to load
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add support for new insurers or improve existing functionality
-4. Submit a pull request
 
 ## License
 
