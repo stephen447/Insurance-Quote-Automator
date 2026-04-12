@@ -49,4 +49,16 @@ PERSONAL_INFO = {
 
 
 if __name__ == "__main__":
+    # Create insurance quotes file with header
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    with open("insurance_quotes.txt", "w") as f:
+        f.write(f"Insurance Quote Comparison Report\n")
+        f.write(f"Generated: {timestamp}\n")
+        f.write(f"Personal Details: {PERSONAL_INFO['first_name']} {PERSONAL_INFO['last_name']}\n")
+        f.write(f"Vehicle: {PERSONAL_INFO['car_registration']}\n")
+        f.write(f"{'='*50}\n\n")
+    
+    # Run An Post quote
     asyncio.run(an_post.main(PERSONAL_INFO))

@@ -37,9 +37,6 @@ async def fill_date_of_birth(page, date_string):
     """Fill date of birth fields (DD/MM/YYYY)"""
     date_obj = datetime.strptime(date_string, "%d-%m-%Y")
     
-    # Get the DOB container specifically
-    #dob_container = page.locator('#31f90f42-ad1f-f111-8138-005056853e6f-base')
-    
     await page.locator('input[placeholder="DD"]').first.fill(str(date_obj.day).zfill(2))
     await page.locator('input[placeholder="MM"]').first.fill(str(date_obj.month).zfill(2))
     await page.locator('input[placeholder="YYYY"]').first.fill(str(date_obj.year))
@@ -264,12 +261,58 @@ async def run(playwright: Playwright, data):
     print("\n--- Form Complete ---")
     await asyncio.sleep(2)
     
-    # Uncomment below to click the submit button
+    # Click the submit button
     await page.locator('button:has-text("Get an Indicative Price")').click()
     print("Clicked 'Get an Indicative Price' button")
     
+    # Wait for results page to load
+    await asyncio.sleep(15)
+    
+    # Extract and store initial price (Comprehensive)
+    results = []
+    
+    try:
+        initial_price_element = page.locator('#breadCrumb-Price')
+        initial_price = await initial_price_element.inner_text()
+        print(f"Initial Comprehensive Price: {initial_price}")
+        results.append(f"Comprehensive: {initial_price}")
+    except:
+        print("Could not extract initial price")
+        results.append("Comprehensive: Price not found")
+    
+    # Select Third Party Fire & Theft
+    try:
+        await page.locator('text=Third Party Fire And Theft').click()
+        await asyncio.sleep(2)
+        await page.locator('text=Recalculate').first.click()
+        print("Selected 'Third Party Fire & Theft'")
+        await asyncio.sleep(15)
+        
+        # Extract TPFT price
+        tpft_price_element = page.locator('#breadCrumb-Price')
+        tpft_price = await tpft_price_element.inner_text()
+        print(f"Third Party Fire & Theft Price: {tpft_price}")
+        results.append(f"Third Party Fire & Theft: {tpft_price}")
+    except Exception as e:
+        print("Could not select Third Party Fire & Theft or extract price")
+        print(f"Exception: {e}")
+        results.append("Third Party Fire & Theft: Price not found")
+    
+    
+    # Store results in text file
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open("insurance_quotes.txt", "a") as f:
+        f.write(f"Company: An Post Insurance\n")
+        f.write(f"Quote Generated: {timestamp}\n")
+        f.write(f"{'='*50}\n")
+        for result in results:
+            f.write(f"{result}\n")
+        f.write(f"{'='*50}\n\n")
+    
+    print(f"\nResults saved to insurance_quotes.txt")
+    
     # Keep browser open to see results
-    await asyncio.sleep(50)
+    await asyncio.sleep(10)
     await browser.close()
 
 
