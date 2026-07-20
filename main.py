@@ -1,6 +1,7 @@
 import asyncio
 from playwright.async_api import Playwright, async_playwright, expect
 import companies.an_post as an_post
+import companies.axa as axa
 
 # Personal information dictionary
 PERSONAL_INFO = {
@@ -61,4 +62,7 @@ if __name__ == "__main__":
         f.write(f"{'='*50}\n\n")
     
     # Run An Post quote
-    asyncio.run(an_post.main(PERSONAL_INFO))
+    # asyncio.run(an_post.main(PERSONAL_INFO))
+    
+    # Run AXA quote
+    asyncio.run(axa.main(PERSONAL_INFO))
