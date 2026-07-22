@@ -37,7 +37,7 @@ PERSONAL_INFO = {
     "no_claims_discount": 4,
     "country_of_most_recent_ncd": "ireland",
     "previous_insurer": "allianz",
-    "policy_start_date": "01-05-2026",
+    "policy_start_date": "01-08-2026",
     "same_as_current_policy_end_date": True,
     "payment_type": "full",
     # Additional Drivers

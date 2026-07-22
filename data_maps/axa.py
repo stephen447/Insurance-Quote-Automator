@@ -58,6 +58,21 @@ AXA_MAPPINGS = {
         "named_driver": "10088005",
         "company_car": "10088007"
     },
+
+    # Ten represents AXA's "10+ years" option.
+    "no_claims_discount_years": {
+        0: "10098001",
+        1: "10098002",
+        2: "10098003",
+        3: "10098004",
+        4: "10098005",
+        5: "10098006",
+        6: "10098014",
+        7: "10098015",
+        8: "10098016",
+        9: "10098017",
+        10: "10098018"
+    },
     
     # Annual distance driven mappings (kilometers)
     "annual_distance": {

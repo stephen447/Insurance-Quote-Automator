@@ -230,6 +230,25 @@ async def fill_personal_details(page, data):
     except Exception as e:
         print(f"Error selecting employment status: {e}")
 
+    # AXA renders the occupation search dynamically for applicable statuses.
+    try:
+        occupation_input = personal_section.locator(
+            'input[name*="Occupation"]:not([type="radio"]), '
+            'input[placeholder*="occupation" i]'
+        ).first
+        await occupation_input.wait_for(state="visible", timeout=3_000)
+        await occupation_input.fill(data['occupation'])
+        print(f"Filled occupation search: {data['occupation']}")
+
+        occupation_suggestion = personal_section.locator(
+            '.react-autosuggest__suggestion, [role="option"]'
+        ).first
+        await occupation_suggestion.wait_for(state="visible", timeout=5_000)
+        await occupation_suggestion.click()
+        print("Selected occupation from suggestions")
+    except Exception as e:
+        print(f"Occupation field was not shown or selectable: {e}")
+
     # Part-time occupation
     try:
         part_time_occupation = data.get("part_time_occupation", False)
@@ -287,12 +306,26 @@ async def fill_personal_details(page, data):
 async def fill_driving_history(page, data):
     """Fill driving history section"""
     print("\n--- Filling Driving History Section ---")
-    
+    driving_section = page.locator('section[id="DrivingHistory"]')
+    await driving_section.wait_for(state="visible")
+
+    async def click_radio_label(field_name, value):
+        radio_input = driving_section.locator(
+            f'input[name="{field_name}"][value="{value}"]'
+        )
+        await radio_input.wait_for(state="attached")
+        option_id = await radio_input.get_attribute("id")
+        option_label = driving_section.locator(f'label[for="{option_id}"]')
+        await option_label.wait_for(state="visible")
+        await option_label.click()
+
     # Driving licence type
     try:
         licence_type = axa_helpers.map_licence_type(data['licence_type'], data['licence_duration'])
         licence_value = AXA_MAPPINGS["licence_type"][licence_type]
-        await page.locator(f'input[name="DrivingHistory.DrivingLicenceTypeId"][value="{licence_value}"]').click()
+        await click_radio_label(
+            "DrivingHistory.DrivingLicenceTypeId", licence_value
+        )
         print(f"Selected licence type: {licence_type}")
     except Exception as e:
         print(f"Error selecting licence type: {e}")
@@ -301,38 +334,114 @@ async def fill_driving_history(page, data):
     try:
         years_category = axa_helpers.map_years_licence_held(data['licence_duration'])
         years_value = AXA_MAPPINGS["years_licence_held"][years_category]
-        await page.locator('#DrivingHistory.YearsLicenceHeldTypeId').select_option(years_value)
+        await driving_section.locator(
+            'select[name="DrivingHistory.YearsLicenceHeldTypeId"]'
+        ).select_option(value=years_value)
         print(f"Selected years licence held: {years_category}")
     except Exception as e:
         print(f"Error selecting years licence held: {e}")
     
     # Penalty points
     try:
-        penalty_value = AXA_MAPPINGS["penalty_points"][data['has_penalty_points']]
-        await page.locator(f'input[name="DrivingHistory.PenaltyPointsDetails.HasPenaltyPoints"][value="{penalty_value}"]').click()
+        has_penalty_points = data.get('has_penalty_points', False)
+        penalty_value = AXA_MAPPINGS["penalty_points"][has_penalty_points]
+        await click_radio_label(
+            "DrivingHistory.PenaltyPointsDetails.HasPenaltyPoints",
+            penalty_value,
+        )
         print(f"Selected penalty points: {penalty_value}")
     except Exception as e:
         print(f"Error selecting penalty points: {e}")
     
     # Driving experience
+    experience = None
     try:
         experience = axa_helpers.map_driving_experience(data['driving_experience'])
         experience_value = AXA_MAPPINGS["driving_experience"][experience]
-        await page.locator(f'input[name="DrivingHistory.DrivingExperienceTypeId"][value="{experience_value}"]').click()
+        await click_radio_label(
+            "DrivingHistory.DrivingExperienceTypeId", experience_value
+        )
         print(f"Selected driving experience: {experience}")
     except Exception as e:
         print(f"Error selecting driving experience: {e}")
+
+    async def select_no_claims_years(field_name, years):
+        years = max(0, min(int(years), 10))
+        option_value = AXA_MAPPINGS["no_claims_discount_years"][years]
+        await driving_section.locator(
+            f'select[name="{field_name}"]'
+        ).select_option(value=option_value)
+        return "10+" if years == 10 else years
+
+    # AXA asks for NCD years after "Insured in own name" is selected.
+    if experience == "own_name":
+        try:
+            display_years = await select_no_claims_years(
+                "DrivingHistory.NoClaimsDiscountYearsInOwnNameTypeId",
+                data.get("no_claims_discount", 0),
+            )
+            print(f"Selected no claims discount years: {display_years}")
+        except Exception as e:
+            print(f"Error selecting no claims discount years: {e}")
+
+    # AXA may ask for named-driver years after either own-name or named-driver
+    # experience is selected. For own-name experience this is additional to NCD.
+    if experience in {"own_name", "named_driver"}:
+        try:
+            named_driver_field = driving_section.locator(
+                'select[name="DrivingHistory.NoClaimDiscountYearsAsNamedDriverTypeId"]'
+            )
+            await named_driver_field.wait_for(state="visible", timeout=3_000)
+            default_named_driver_years = (
+                data.get("no_claims_discount", 0)
+                if experience == "named_driver"
+                else 0
+            )
+            display_years = await select_no_claims_years(
+                "DrivingHistory.NoClaimDiscountYearsAsNamedDriverTypeId",
+                data.get(
+                    "named_driver_no_claims_discount",
+                    default_named_driver_years,
+                ),
+            )
+            print(f"Selected named-driver years: {display_years}")
+        except Exception as e:
+            print(f"Named-driver years question was not shown or selectable: {e}")
+
+    # Some combinations require confirmation of the combined consecutive years.
+    if experience in {"own_name", "named_driver"}:
+        try:
+            claims_total_checkbox = driving_section.locator(
+                'input[name="DrivingHistory.IsClaimsFreeTotalConfirmed"]'
+            )
+            await claims_total_checkbox.wait_for(state="attached", timeout=3_000)
+            claims_total_label = driving_section.locator(
+                'label[for="DrivingHistory.IsClaimsFreeTotalConfirmed"]'
+            )
+            await claims_total_label.wait_for(state="visible", timeout=3_000)
+            await claims_total_label.click()
+            print("Confirmed the combined claims-free driving experience")
+        except Exception:
+            print("Combined claims-free confirmation was not shown; skipping it")
 
 
 async def fill_claims_history(page, data):
     """Fill claims history section"""
     print("\n--- Filling Claims History Section ---")
-    
+    claims_section = page.locator('section[id="ClaimsHistory"]')
+    await claims_section.wait_for(state="visible")
+
     try:
-        # Default to no claims for now
-        claims_value = AXA_MAPPINGS["previous_claims"][False]
-        await page.locator(f'input[name="HasPreviousClaims"][value="{claims_value}"]').click()
-        print(f"Selected previous claims: No")
+        has_previous_claims = data.get("has_previous_claims", False)
+        claims_value = "true" if has_previous_claims else "false"
+        claims_input = claims_section.locator(
+            f'input[name="HasPreviousClaims"][value="{claims_value}"]'
+        )
+        await claims_input.wait_for(state="attached")
+        await claims_input.evaluate("element => element.click()")
+        if not await claims_input.is_checked():
+            raise RuntimeError("AXA did not register the claims selection")
+        print(f"Selected previous claims: {has_previous_claims}")
     except Exception as e:
         print(f"Error selecting previous claims: {e}")
 
@@ -340,12 +449,21 @@ async def fill_claims_history(page, data):
 async def fill_discounts(page, data):
     """Fill discounts section"""
     print("\n--- Filling Discounts Section ---")
-    
+    discounts_section = page.locator('section[id="Discounts"]')
+    await discounts_section.wait_for(state="visible")
+
     try:
-        # Default to no multi-policy discount
-        discount_value = AXA_MAPPINGS["multi_policy_discount"][False]
-        await page.locator(f'input[name="CoverDetails.HasMultiProductDiscount"][value="{discount_value}"]').click()
-        print(f"Selected multi-policy discount: No")
+        has_multi_policy_discount = data.get("multi_policy_discount", False)
+        discount_value = "true" if has_multi_policy_discount else "false"
+        discount_input = discounts_section.locator(
+            'input[name="CoverDetails.HasMultiProductDiscount"]'
+            f'[value="{discount_value}"]'
+        )
+        await discount_input.wait_for(state="attached")
+        await discount_input.evaluate("element => element.click()")
+        if not await discount_input.is_checked():
+            raise RuntimeError("AXA did not register the multi-policy selection")
+        print(f"Selected multi-policy discount: {has_multi_policy_discount}")
     except Exception as e:
         print(f"Error selecting multi-policy discount: {e}")
 
@@ -353,28 +471,42 @@ async def fill_discounts(page, data):
 async def fill_cover_details(page, data):
     """Fill cover details section"""
     print("\n--- Filling Cover Details Section ---")
-    
+    cover_section = page.locator('section[id="YourCover"]')
+    await cover_section.wait_for(state="visible")
+
+    async def set_checkbox(field_name, desired_state):
+        checkbox = cover_section.locator(f'input[name="{field_name}"]')
+        await checkbox.wait_for(state="attached")
+        if await checkbox.is_checked() != desired_state:
+            await checkbox.evaluate("element => element.click()")
+        if await checkbox.is_checked() != desired_state:
+            raise RuntimeError(f"AXA did not update {field_name}")
+
     # Cover start date
     try:
         formatted_date = axa_helpers.format_date_for_axa(data['policy_start_date'])
-        await page.locator('#CoverDetails.CoverStartDate').fill(formatted_date)
+        await cover_section.locator(
+            'input[name="CoverDetails.CoverStartDate"]'
+        ).fill(formatted_date)
         print(f"Filled cover start date: {formatted_date}")
     except Exception as e:
         print(f"Error filling cover start date: {e}")
     
     # Accept assumptions
     try:
-        if data.get('accept_terms', True):
-            await page.locator('#ConfirmAssumptions').check()
-            print("Checked assumptions acceptance")
+        accept_assumptions = data.get('accept_terms', True)
+        await set_checkbox("ConfirmAssumptions", accept_assumptions)
+        print(f"Set assumptions acceptance: {accept_assumptions}")
     except Exception as e:
         print(f"Error checking assumptions: {e}")
     
     # Marketing consent (optional)
     try:
-        if data.get('marketing_consent', False):
-            await page.locator('#CoverDetails.IsGdprConsentGiven').check()
-            print("Checked marketing consent")
+        marketing_consent = data.get('marketing_consent', False)
+        await set_checkbox(
+            "CoverDetails.IsGdprConsentGiven", marketing_consent
+        )
+        print(f"Set marketing consent: {marketing_consent}")
     except Exception as e:
         print(f"Error checking marketing consent: {e}")
     
@@ -382,19 +514,42 @@ async def fill_cover_details(page, data):
     try:
         data_consent = data.get('data_consent', True)
         consent_value = AXA_MAPPINGS["data_consent"][data_consent]
-        await page.locator(f'input[name="CoverDetails.IsDataConsentGiven"][value="{consent_value}"]').click()
+        consent_input = cover_section.locator(
+            'input[name="CoverDetails.IsDataConsentGiven"]'
+            f'[value="{consent_value}"]'
+        )
+        await consent_input.wait_for(state="attached")
+        await consent_input.evaluate("element => element.click()")
+        if not await consent_input.is_checked():
+            raise RuntimeError("AXA did not register the data-consent selection")
         print(f"Selected data consent: {consent_value}")
     except Exception as e:
         print(f"Error selecting data consent: {e}")
-    
-    # Phone consent
+
+    # AXA conditionally offers a phone call if the customer has questions.
     try:
         phone_consent = data.get('phone_consent', True)
-        consent_value = AXA_MAPPINGS["phone_consent"][phone_consent]
-        await page.locator(f'input[name="CoverDetails.IsPhoneConsentGiven"][value="{consent_value}"]').click()
-        print(f"Selected phone consent: {consent_value}")
+        phone_consent_value = AXA_MAPPINGS["phone_consent"][phone_consent]
+        phone_consent_input = cover_section.locator(
+            'input[name="CoverDetails.IsPhoneConsentGiven"]'
+            f'[value="{phone_consent_value}"]'
+        )
+        await phone_consent_input.wait_for(state="attached", timeout=3_000)
+        await phone_consent_input.evaluate("element => element.click()")
+        if not await phone_consent_input.is_checked():
+            raise RuntimeError("AXA did not register the phone-help selection")
+        print(f"Selected phone help consent: {phone_consent}")
     except Exception as e:
-        print(f"Error selecting phone consent: {e}")
+        print(f"Phone help question was not shown or selectable: {e}")
+
+
+async def submit_quote(page):
+    """Submit the completed AXA quote form."""
+    cover_section = page.locator('section[id="YourCover"]')
+    get_quote_button = cover_section.locator('button[name="getquote-btn"]')
+    await get_quote_button.wait_for(state="visible")
+    await get_quote_button.click()
+    print("Clicked 'Get a Quote'")
 
 
 async def extract_quotes(page, data):

@@ -130,17 +130,14 @@ def map_licence_type(licence_type, duration):
     """Map licence type and duration to AXA licence categories"""
     licence_lower = licence_type.lower()
     
-    if "full" in licence_lower:
-        if duration >= 1:
-            return "roi_full"  # Assume ROI if full and held for over a year
-        else:
-            return "roi_provisional"
-    elif "provisional" in licence_lower:
-        return "roi_provisional"
-    elif "uk" in licence_lower:
+    if "uk" in licence_lower:
         return "uk_full"
     elif "eu" in licence_lower:
         return "eu_full"
+    elif "provisional" in licence_lower or "learner" in licence_lower:
+        return "roi_provisional"
+    elif "full" in licence_lower:
+        return "roi_full"
     else:
         return "roi_full"  # Default assumption
 
