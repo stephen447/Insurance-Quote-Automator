@@ -10,11 +10,11 @@ async def main():
     async with Stealth().use_async(async_playwright()) as playwright:
         browser = await playwright.chromium.launch(headless=False)
         page = await browser.new_page()
-        await page.goto("https://www.axa.ie/car-insurance/")
+        await page.goto("https://www.axa.ie/car-insurance/quote/your-details")
 
         await axa.accept_cookies(page)
         await axa.fill_vehicle_details(page, PERSONAL_INFO)
-        # await axa.fill_personal_details(page, PERSONAL_INFO)
+        await axa.fill_personal_details(page, PERSONAL_INFO)
         # await axa.fill_driving_history(page, PERSONAL_INFO)
         # await axa.fill_claims_history(page, PERSONAL_INFO)
         # await axa.fill_discounts(page, PERSONAL_INFO)

@@ -147,25 +147,41 @@ async def fill_vehicle_details(page, data):
 async def fill_personal_details(page, data):
     """Fill personal details section"""
     print("\n--- Filling Personal Details Section ---")
-    
+    personal_section = page.locator('section[id="ProposerDetails"]')
+    await personal_section.wait_for(state="visible")
+
+    async def click_radio_label(field_name, value):
+        radio_input = personal_section.locator(
+            f'input[name="{field_name}"][value="{value}"]'
+        )
+        await radio_input.wait_for(state="attached")
+        option_id = await radio_input.get_attribute("id")
+        option_label = personal_section.locator(f'label[for="{option_id}"]')
+        await option_label.wait_for(state="visible")
+        await option_label.click()
+
     # Title
     try:
         title_value = AXA_MAPPINGS["title"][data['title']]
-        await page.locator(f'input[name="ProposerDetails.TitleTypeId"][value="{title_value}"]').click()
+        await click_radio_label("ProposerDetails.TitleTypeId", title_value)
         print(f"Selected title: {data['title']}")
     except Exception as e:
         print(f"Error selecting title: {e}")
     
     # First name
     try:
-        await page.locator('#ProposerDetails.FirstName').fill(data['first_name'])
+        await personal_section.locator(
+            'input[name="ProposerDetails.FirstName"]'
+        ).fill(data['first_name'])
         print(f"Filled first name: {data['first_name']}")
     except Exception as e:
         print(f"Error filling first name: {e}")
     
     # Last name
     try:
-        await page.locator('#ProposerDetails.LastName').fill(data['last_name'])
+        await personal_section.locator(
+            'input[name="ProposerDetails.LastName"]'
+        ).fill(data['last_name'])
         print(f"Filled last name: {data['last_name']}")
     except Exception as e:
         print(f"Error filling last name: {e}")
@@ -173,16 +189,24 @@ async def fill_personal_details(page, data):
     # Date of birth
     try:
         date_components = axa_helpers.split_date_components(data['date_of_birth'])
-        await page.locator('#ProposerDetails.DateOfBirth.Day').fill(date_components['day'])
-        await page.locator('#ProposerDetails.DateOfBirth.Month').fill(date_components['month'])
-        await page.locator('#ProposerDetails.DateOfBirth.Year').fill(date_components['year'])
+        await personal_section.locator(
+            'input[name="ProposerDetails.DateOfBirth.Day"]'
+        ).fill(date_components['day'])
+        await personal_section.locator(
+            'input[name="ProposerDetails.DateOfBirth.Month"]'
+        ).fill(date_components['month'])
+        await personal_section.locator(
+            'input[name="ProposerDetails.DateOfBirth.Year"]'
+        ).fill(date_components['year'])
         print(f"Filled date of birth: {data['date_of_birth']}")
     except Exception as e:
         print(f"Error filling date of birth: {e}")
     
     # Email
     try:
-        await page.locator('#ProposerDetails.EmailAddress').fill(data['email'])
+        await personal_section.locator(
+            'input[name="ProposerDetails.EmailAddress"]'
+        ).fill(data['email'])
         print(f"Filled email: {data['email']}")
     except Exception as e:
         print(f"Error filling email: {e}")
@@ -190,7 +214,7 @@ async def fill_personal_details(page, data):
     # Phone number
     try:
         formatted_phone = axa_helpers.format_phone_number(data['phone'])
-        await page.locator('#phone-number').fill(formatted_phone)
+        await personal_section.locator('input[name="phone-number"]').fill(formatted_phone)
         print(f"Filled phone number: {formatted_phone}")
     except Exception as e:
         print(f"Error filling phone number: {e}")
@@ -199,33 +223,63 @@ async def fill_personal_details(page, data):
     try:
         employment_status = axa_helpers.map_employment_status(data.get('occupation', 'employed'))
         employment_value = AXA_MAPPINGS["employment_status"][employment_status]
-        await page.locator(f'input[name="ProposerDetails.EmploymentStatusTypeId"][value="{employment_value}"]').click()
+        await click_radio_label(
+            "ProposerDetails.EmploymentStatusTypeId", employment_value
+        )
         print(f"Selected employment status: {employment_status}")
     except Exception as e:
         print(f"Error selecting employment status: {e}")
+
+    # Part-time occupation
+    try:
+        part_time_occupation = data.get("part_time_occupation", False)
+        part_time_value = "true" if part_time_occupation else "false"
+        part_time_input = personal_section.locator(
+            'input[name="ProposerDetails.PartTimeOccupation"]'
+            f'[value="{part_time_value}"]'
+        )
+        try:
+            await part_time_input.wait_for(state="attached", timeout=3_000)
+        except Exception:
+            print("Part-time occupation question was not shown; skipping it")
+        else:
+            option_id = await part_time_input.get_attribute("id")
+            option_label = personal_section.locator(f'label[for="{option_id}"]')
+            await option_label.wait_for(state="visible", timeout=3_000)
+            await option_label.click()
+            print(f"Selected part-time occupation: {part_time_occupation}")
+    except Exception as e:
+        print(f"Error selecting part-time occupation: {e}")
     
     # Address
     try:
-        address_string = f"{data['address']['street']}, {data['address']['city']}, {data['address']['county']}, {data['address']['postal_code']}"
-        await page.locator('#ProposerDetails.AddressDisplayFormatted').fill(address_string)
-        print(f"Filled address: {address_string}")
-        await asyncio.sleep(2)  # Wait for address suggestions
-        
-        # Click first address suggestion if available
+        address = data['address']
+        address_query = address.get('postal_code') or (
+            f"{address['street']}, {address['city']}, {address['county']}"
+        )
+        await personal_section.locator(
+            'input[name="ProposerDetails.AddressDisplayFormatted"]'
+        ).fill(address_query)
+        print(f"Filled address search: {address_query}")
+
         try:
-            await page.locator('.react-autosuggest__suggestion').first.click()
+            address_suggestion = personal_section.locator(
+                '.react-autosuggest__suggestion, [role="option"]'
+            ).first
+            await address_suggestion.wait_for(state="visible", timeout=5_000)
+            await address_suggestion.click()
             print("Selected address from suggestions")
-        except:
-            print("No address suggestions found, using manual entry")
+        except Exception as e:
+            print(f"No address suggestion could be selected: {e}")
     except Exception as e:
         print(f"Error filling address: {e}")
     
     # Household type
     try:
-        # Default to owned for now
-        household_value = AXA_MAPPINGS["household_type"]["owned"]
-        await page.locator(f'input[name="ProposerDetails.HouseHoldTypeId"][value="{household_value}"]').click()
-        print(f"Selected household type: owned")
+        household_type = data.get("household_type", "owned")
+        household_value = AXA_MAPPINGS["household_type"][household_type]
+        await click_radio_label("ProposerDetails.HouseHoldTypeId", household_value)
+        print(f"Selected household type: {household_type}")
     except Exception as e:
         print(f"Error selecting household type: {e}")
 
