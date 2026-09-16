@@ -8,10 +8,17 @@ import companies.an_post as an_post
 import companies.axa as axa
 
 
-PROVIDERS = (
-    ("An Post Insurance", an_post.run),
-    ("AXA Insurance", axa.run),
-)
+PROVIDERS = {
+    "an-post": ("An Post Insurance", an_post.run),
+    "axa": ("AXA Insurance", axa.run),
+}
+
+# Select the companies to run here.
+# Examples:
+#   ("an-post",)        - An Post only
+#   ("axa",)            - AXA only
+#   ("an-post", "axa") - both companies
+SELECTED_PROVIDERS = ("an-post", "axa")
 
 # Personal information dictionary
 PERSONAL_INFO = {
@@ -83,10 +90,19 @@ def record_provider_failure(provider_name, error):
         f.write(f"{'='*50}\n\n")
 
 
-async def run_all_providers():
-    """Run each insurance provider sequentially with stealth enabled."""
+async def run_selected_providers():
+    """Run the providers selected in SELECTED_PROVIDERS."""
+    unknown_providers = set(SELECTED_PROVIDERS) - set(PROVIDERS)
+    if unknown_providers:
+        available = ", ".join(PROVIDERS)
+        unknown = ", ".join(sorted(unknown_providers))
+        raise ValueError(
+            f"Unknown provider(s): {unknown}. Available providers: {available}"
+        )
+
     async with Stealth().use_async(async_playwright()) as playwright:
-        for provider_name, run_provider in PROVIDERS:
+        for provider_key in SELECTED_PROVIDERS:
+            provider_name, run_provider = PROVIDERS[provider_key]
             print(f"\n{'='*50}")
             print(f"Running quote for {provider_name}")
             print(f"{'='*50}")
@@ -100,7 +116,7 @@ async def run_all_providers():
 
 def main():
     initialise_report()
-    asyncio.run(run_all_providers())
+    asyncio.run(run_selected_providers())
 
 
 if __name__ == "__main__":

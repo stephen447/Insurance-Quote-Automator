@@ -53,6 +53,19 @@ pip install -r requirements.txt
 
 2. **Run the Automation**:
 
+   Select which insurance companies to run in `main.py`:
+
+   ```python
+   # An Post only
+   SELECTED_PROVIDERS = ("an-post",)
+
+   # AXA only
+   SELECTED_PROVIDERS = ("axa",)
+
+   # Both companies
+   SELECTED_PROVIDERS = ("an-post", "axa")
+   ```
+
    ```bash
    python main.py
    ```
