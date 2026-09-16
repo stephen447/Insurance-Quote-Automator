@@ -43,10 +43,19 @@ All Python files use Black with the shared configuration in `pyproject.toml`.
 
 ```bash
 pip install -r requirements-dev.txt
+pre-commit install
 isort .
 black .
 isort --check-only .
 black --check .
+```
+
+Once installed, the pre-commit hook runs isort and Black on staged Python files
+before every commit. If either formatter changes a file, review and stage the
+change, then commit again. Run the checks against the entire repository with:
+
+```bash
+pre-commit run --all-files
 ```
 
 ## Usage
