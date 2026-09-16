@@ -5,20 +5,23 @@ from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
 import companies.an_post as an_post
+import companies.allianz as allianz
 import companies.axa as axa
 
 
 PROVIDERS = {
     "an-post": ("An Post Insurance", an_post.run),
+    "allianz": ("Allianz Insurance", allianz.run),
     "axa": ("AXA Insurance", axa.run),
 }
 
 # Select the companies to run here.
 # Examples:
 #   ("an-post",)        - An Post only
+#   ("allianz",)        - Allianz only (automation in progress)
 #   ("axa",)            - AXA only
-#   ("an-post", "axa") - both companies
-SELECTED_PROVIDERS = ("an-post", "axa")
+#   ("an-post", "axa") - multiple companies
+SELECTED_PROVIDERS = ("allianz",)
 
 # Personal information dictionary
 PERSONAL_INFO = {

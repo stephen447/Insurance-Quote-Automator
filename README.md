@@ -13,6 +13,8 @@ A Python automation tool that fills out insurance quote forms on Irish insurance
 ## Supported Insurers
 
 - **An Post Insurance** - Fully automated quote generation
+- **AXA Insurance** - Automated quote generation
+- **Allianz Insurance** - Boilerplate added; form automation in progress
 
 ## Requirements
 
@@ -61,6 +63,9 @@ pip install -r requirements.txt
 
    # AXA only
    SELECTED_PROVIDERS = ("axa",)
+
+   # Allianz only (automation is currently a scaffold)
+   SELECTED_PROVIDERS = ("allianz",)
 
    # Both companies
    SELECTED_PROVIDERS = ("an-post", "axa")
