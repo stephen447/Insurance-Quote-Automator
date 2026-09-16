@@ -151,3 +151,23 @@ This project is provided for educational purposes. Users are responsible for ens
 ## Disclaimer
 
 This tool is intended for legitimate quote comparison purposes only. Users must ensure they comply with all applicable laws, regulations, and website terms of service. The authors are not responsible for any misuse of this software.
+
+## To Do
+
+AXA
+Allianz
+Aviva
+FBD
+Zurich
+123.ie / Intact
+RedClick
+OUTsurance
+KennCo
+Its4Women
+AA
+Chill
+An Post Insurance
+AIB
+Quote Devil
+First Ireland
+Campion / another large independent broker
