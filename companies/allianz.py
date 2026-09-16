@@ -1,17 +1,16 @@
 """Allianz Ireland car insurance automation."""
 
-from playwright.async_api import Playwright
+from playwright.async_api import Playwright, async_playwright
 
 from data_maps.allianz import ALLIANZ_MAPPINGS
 from helper_functions.allianz import accept_cookies
 
-
-ALLIANZ_HOME_URL = "https://quote.allianz.ie/motorb2cui/"
+ALLIANZ_QUOTE_URL = "https://quote.allianz.ie/motorb2cui/"
 
 
 async def open_quote_form(page):
     """Open Allianz Ireland and enter the car quote journey."""
-    await page.goto(ALLIANZ_HOME_URL, wait_until="domcontentloaded")
+    await page.goto(ALLIANZ_QUOTE_URL, wait_until="domcontentloaded")
     await accept_cookies(page)
 
     quote_link = page.get_by_role("link", name="Get car quote", exact=False).first
@@ -72,3 +71,9 @@ async def run(playwright: Playwright, data):
 def supported_mappings():
     """Return the mapping keys currently defined for Allianz."""
     return tuple(ALLIANZ_MAPPINGS)
+
+
+async def main(data):
+    """Run Allianz as a standalone provider."""
+    async with async_playwright() as playwright:
+        await run(playwright, data)

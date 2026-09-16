@@ -1,62 +1,29 @@
+"""Form-value mappings for An Post Insurance."""
+
 AN_POST_MAPPINGS = {
-    "title": {
-        "mr": "Mr",
-        "mrs": "Mrs",
-        "ms": "Ms"
-    },
+    "title": {"mr": "Mr", "mrs": "Mrs", "ms": "Ms"},
     "registered_owner": {
         "proposer": "Proposer",
         "employee": "Employee of Proposer",
-        "employer": "Employer of Proposer"
+        "employer": "Employer of Proposer",
     },
-    "right_hand_drive": {
-        True: "Right",
-        False: "Left"
-    },
-    "registered_in_ireland": {
-        True: "Yes",
-        False: "No"
-    },
-    "is_imported": {
-        True: "Yes",
-        False: "No"
-    },
+    "right_hand_drive": {True: "Right", False: "Left"},
+    "registered_in_ireland": {True: "Yes", False: "No"},
+    "is_imported": {True: "Yes", False: "No"},
     "driving_experience": {
         "myself": "Insured in my own name",
         "named_driver": "Insured as a named driver",
-        "none": "No Previous Insurance"
+        "none": "No Previous Insurance",
     },
-    "payment_type": {
-        "full": "In full",
-        "instalments": "By Instalments"
-    },
+    "payment_type": {"full": "In full", "instalments": "By Instalments"},
     "car_usage": {
         "social": "Social, domestic & pleasure use (including commuting)",
-        "business": "Any business use and/or commericial travelling"
-    }, 
-    "licence_type": {
-        "full": "Full (Irish)",
-        "provisional": "Provisional (Irish)"
+        "business": "Any business use and/or commericial travelling",
     },
-    "has_penalty_points": {
-        True: "Yes",
-        False: "No"
-    },
-    "same_as_current_policy_end_date": {
-        True: "Yes",
-        False: "No"
-    },
-    "add_additional_driver": {
-        True: "Yes",
-        False: "No"
-    },
-    "marketing_consent": {
-        True: "Yes",
-        False: "No"
-    },
-    "accept_terms": {
-        True: "Yes",
-        False: "No"
-    }
-
+    "licence_type": {"full": "Full (Irish)", "provisional": "Provisional (Irish)"},
+    "has_penalty_points": {True: "Yes", False: "No"},
+    "same_as_current_policy_end_date": {True: "Yes", False: "No"},
+    "add_additional_driver": {True: "Yes", False: "No"},
+    "marketing_consent": {True: "Yes", False: "No"},
+    "accept_terms": {True: "Yes", False: "No"},
 }

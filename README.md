@@ -37,6 +37,18 @@ cd insurance-quote-automator
 pip install -r requirements.txt
 ```
 
+### Development formatting
+
+All Python files use Black with the shared configuration in `pyproject.toml`.
+
+```bash
+pip install -r requirements-dev.txt
+isort .
+black .
+isort --check-only .
+black --check .
+```
+
 ## Usage
 
 1. **Configure Personal Information**:

@@ -3,7 +3,6 @@
 Populate these mappings as each section of the live quote form is automated.
 """
 
-
 ALLIANZ_MAPPINGS = {
     "title": {},
     "car_usage": {},

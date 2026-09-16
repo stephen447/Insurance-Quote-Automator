@@ -1,6 +1,7 @@
-# AXA Helper Functions
+"""Helpers for the AXA Ireland quote journey."""
 
 from datetime import datetime
+
 
 def format_date_for_axa(date_string):
     """Convert date string to DD/MM/YYYY format for AXA"""
@@ -14,27 +15,35 @@ def format_date_for_axa(date_string):
         # Handle other formats if needed
         return date_string
 
+
 def split_date_components(date_string):
     """Split date string into day, month, year components"""
     formatted_date = format_date_for_axa(date_string)
-    
+
     if "/" in formatted_date:
         parts = formatted_date.split("/")
         if len(parts) == 3:
-            return {
-                "day": parts[0],
-                "month": parts[1], 
-                "year": parts[2]
-            }
-    
+            return {"day": parts[0], "month": parts[1], "year": parts[2]}
+
     # Default fallback
     return {"day": "", "month": "", "year": ""}
+
 
 def map_employment_status(occupation):
     """Map occupation to employment status for AXA"""
     occupation_lower = occupation.lower()
-    
-    if any(word in occupation_lower for word in ["developer", "engineer", "manager", "analyst", "consultant", "designer"]):
+
+    if any(
+        word in occupation_lower
+        for word in [
+            "developer",
+            "engineer",
+            "manager",
+            "analyst",
+            "consultant",
+            "designer",
+        ]
+    ):
         return "employed"
     elif any(word in occupation_lower for word in ["self", "freelance", "contractor"]):
         return "self_employed"
@@ -44,6 +53,7 @@ def map_employment_status(occupation):
         return "retired"
     else:
         return "employed"  # Default assumption
+
 
 def map_annual_distance(mileage):
     """Map estimated mileage to AXA annual distance categories"""
@@ -86,6 +96,7 @@ def map_annual_distance(mileage):
     else:
         return "over_50000"
 
+
 def map_years_licence_held(years):
     """Map years licence held to AXA categories"""
     if years < 1:
@@ -111,10 +122,11 @@ def map_years_licence_held(years):
     else:
         return "10_plus"
 
+
 def map_driving_experience(driving_experience):
     """Map driving experience to AXA categories"""
     experience_lower = driving_experience.lower()
-    
+
     if "myself" in experience_lower or "own" in experience_lower:
         return "own_name"
     elif "named" in experience_lower:
@@ -126,10 +138,11 @@ def map_driving_experience(driving_experience):
     else:
         return "own_name"  # Default assumption
 
+
 def map_licence_type(licence_type, duration):
     """Map licence type and duration to AXA licence categories"""
     licence_lower = licence_type.lower()
-    
+
     if "uk" in licence_lower:
         return "uk_full"
     elif "eu" in licence_lower:
@@ -141,8 +154,9 @@ def map_licence_type(licence_type, duration):
     else:
         return "roi_full"  # Default assumption
 
+
 def format_phone_number(phone):
     """Format phone number for AXA"""
     # Remove any non-digit characters
-    cleaned = ''.join(filter(str.isdigit, phone))
+    cleaned = "".join(filter(str.isdigit, phone))
     return cleaned

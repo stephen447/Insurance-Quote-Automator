@@ -1,9 +1,15 @@
+"""AXA Ireland car quote automation."""
+
 import asyncio
-from playwright.async_api import Playwright, async_playwright
-from data_maps.axa import AXA_MAPPINGS
-import helper_functions.axa as axa_helpers
-from datetime import datetime
 import random
+from datetime import datetime
+
+from playwright.async_api import Playwright, async_playwright
+
+import helper_functions.axa as axa_helpers
+from data_maps.axa import AXA_MAPPINGS
+
+AXA_QUOTE_URL = "https://www.axa.ie/car-insurance/quote/your-details"
 
 
 PROFILES = [
@@ -16,7 +22,7 @@ PROFILES = [
         "timezone": "Europe/London",
         "accept_language": "en-GB,en;q=0.9",
         "sec_ch_ua": '"Chromium";v="120", "Not;A=Brand";v="99"',
-        "platform": '"Windows"'
+        "platform": '"Windows"',
     },
     {
         "name": "chrome_win_us",
@@ -27,8 +33,8 @@ PROFILES = [
         "timezone": "America/New_York",
         "accept_language": "en-US,en;q=0.9",
         "sec_ch_ua": '"Chromium";v="120", "Not;A=Brand";v="99"',
-        "platform": '"Windows"'
-    }
+        "platform": '"Windows"',
+    },
 ]
 
 
@@ -40,11 +46,11 @@ async def accept_cookies(page):
             'button:has-text("Accept All")',
             'button:has-text("Accept")',
             'button:has-text("I agree")',
-            '#onetrust-accept-btn-handler',
-            '.cookie-accept',
-            '[data-testid="cookie-accept"]'
+            "#onetrust-accept-btn-handler",
+            ".cookie-accept",
+            '[data-testid="cookie-accept"]',
         ]
-        
+
         for selector in cookie_selectors:
             try:
                 await page.locator(selector).first.click(timeout=3000)
@@ -62,15 +68,15 @@ async def fill_vehicle_details(page, data):
     print("\n--- Filling Vehicle Details Section ---")
     vehicle_section = page.locator('section[id="VehicleDetails"]')
     await vehicle_section.wait_for(state="visible")
-    
+
     # Registration number
     try:
         registration_input = vehicle_section.locator(
             'input[name="VehicleDetails.VehicleRegistrationNumber"]'
         )
-        await registration_input.fill(data['car_registration'])
+        await registration_input.fill(data["car_registration"])
         print(f"Filled registration number: {data['car_registration']}")
-        
+
         # Click Find car button
         await vehicle_section.get_by_role("button", name="Find car", exact=True).click()
         print("Clicked 'Find car' button")
@@ -84,7 +90,7 @@ async def fill_vehicle_details(page, data):
         print("Confirmed the registration lookup returned the correct car")
     except Exception as e:
         print(f"Error filling vehicle registration: {e}")
-    
+
     # Business use
     try:
         business_use = data.get("business_use", False)
@@ -109,9 +115,7 @@ async def fill_vehicle_details(page, data):
             )
             await cover_input.wait_for(state="attached")
             cover_option_id = await cover_input.get_attribute("id")
-            cover_label = vehicle_section.locator(
-                f'label[for="{cover_option_id}"]'
-            )
+            cover_label = vehicle_section.locator(f'label[for="{cover_option_id}"]')
             await cover_label.wait_for(state="visible")
             await cover_label.click()
             print(f"Selected business use cover: {cover_type}")
@@ -131,10 +135,12 @@ async def fill_vehicle_details(page, data):
             print(f"Selected commuting use: {commuting_use}")
         except Exception as e:
             print(f"Error selecting commuting use: {e}")
-    
+
     # Annual distance
     try:
-        distance_category = axa_helpers.map_annual_distance(data.get('estimated_mileage', 10000))
+        distance_category = axa_helpers.map_annual_distance(
+            data.get("estimated_mileage", 10000)
+        )
         distance_value = AXA_MAPPINGS["annual_distance"][distance_category]
         await vehicle_section.locator(
             'select[name="VehicleDetails.AnnualDistanceDrivenTypeId"]'
@@ -162,66 +168,70 @@ async def fill_personal_details(page, data):
 
     # Title
     try:
-        title_value = AXA_MAPPINGS["title"][data['title']]
+        title_value = AXA_MAPPINGS["title"][data["title"]]
         await click_radio_label("ProposerDetails.TitleTypeId", title_value)
         print(f"Selected title: {data['title']}")
     except Exception as e:
         print(f"Error selecting title: {e}")
-    
+
     # First name
     try:
-        await personal_section.locator(
-            'input[name="ProposerDetails.FirstName"]'
-        ).fill(data['first_name'])
+        await personal_section.locator('input[name="ProposerDetails.FirstName"]').fill(
+            data["first_name"]
+        )
         print(f"Filled first name: {data['first_name']}")
     except Exception as e:
         print(f"Error filling first name: {e}")
-    
+
     # Last name
     try:
-        await personal_section.locator(
-            'input[name="ProposerDetails.LastName"]'
-        ).fill(data['last_name'])
+        await personal_section.locator('input[name="ProposerDetails.LastName"]').fill(
+            data["last_name"]
+        )
         print(f"Filled last name: {data['last_name']}")
     except Exception as e:
         print(f"Error filling last name: {e}")
-    
+
     # Date of birth
     try:
-        date_components = axa_helpers.split_date_components(data['date_of_birth'])
+        date_components = axa_helpers.split_date_components(data["date_of_birth"])
         await personal_section.locator(
             'input[name="ProposerDetails.DateOfBirth.Day"]'
-        ).fill(date_components['day'])
+        ).fill(date_components["day"])
         await personal_section.locator(
             'input[name="ProposerDetails.DateOfBirth.Month"]'
-        ).fill(date_components['month'])
+        ).fill(date_components["month"])
         await personal_section.locator(
             'input[name="ProposerDetails.DateOfBirth.Year"]'
-        ).fill(date_components['year'])
+        ).fill(date_components["year"])
         print(f"Filled date of birth: {data['date_of_birth']}")
     except Exception as e:
         print(f"Error filling date of birth: {e}")
-    
+
     # Email
     try:
         await personal_section.locator(
             'input[name="ProposerDetails.EmailAddress"]'
-        ).fill(data['email'])
+        ).fill(data["email"])
         print(f"Filled email: {data['email']}")
     except Exception as e:
         print(f"Error filling email: {e}")
-    
+
     # Phone number
     try:
-        formatted_phone = axa_helpers.format_phone_number(data['phone'])
-        await personal_section.locator('input[name="phone-number"]').fill(formatted_phone)
+        formatted_phone = axa_helpers.format_phone_number(data["phone"])
+        await personal_section.locator('input[name="phone-number"]').fill(
+            formatted_phone
+        )
         print(f"Filled phone number: {formatted_phone}")
     except Exception as e:
         print(f"Error filling phone number: {e}")
-    
+
     # Employment status
     try:
-        employment_status = axa_helpers.map_employment_status(data.get('occupation', 'employed'))
+        employment_status = axa_helpers.map_employment_status(
+            data.get("occupation", "employed")
+        )
         employment_value = AXA_MAPPINGS["employment_status"][employment_status]
         await click_radio_label(
             "ProposerDetails.EmploymentStatusTypeId", employment_value
@@ -237,7 +247,7 @@ async def fill_personal_details(page, data):
             'input[placeholder*="occupation" i]'
         ).first
         await occupation_input.wait_for(state="visible", timeout=3_000)
-        await occupation_input.fill(data['occupation'])
+        await occupation_input.fill(data["occupation"])
         print(f"Filled occupation search: {data['occupation']}")
 
         occupation_suggestion = personal_section.locator(
@@ -269,11 +279,11 @@ async def fill_personal_details(page, data):
             print(f"Selected part-time occupation: {part_time_occupation}")
     except Exception as e:
         print(f"Error selecting part-time occupation: {e}")
-    
+
     # Address
     try:
-        address = data['address']
-        address_query = address.get('postal_code') or (
+        address = data["address"]
+        address_query = address.get("postal_code") or (
             f"{address['street']}, {address['city']}, {address['county']}"
         )
         await personal_section.locator(
@@ -292,7 +302,7 @@ async def fill_personal_details(page, data):
             print(f"No address suggestion could be selected: {e}")
     except Exception as e:
         print(f"Error filling address: {e}")
-    
+
     # Household type
     try:
         household_type = data.get("household_type", "owned")
@@ -321,18 +331,18 @@ async def fill_driving_history(page, data):
 
     # Driving licence type
     try:
-        licence_type = axa_helpers.map_licence_type(data['licence_type'], data['licence_duration'])
-        licence_value = AXA_MAPPINGS["licence_type"][licence_type]
-        await click_radio_label(
-            "DrivingHistory.DrivingLicenceTypeId", licence_value
+        licence_type = axa_helpers.map_licence_type(
+            data["licence_type"], data["licence_duration"]
         )
+        licence_value = AXA_MAPPINGS["licence_type"][licence_type]
+        await click_radio_label("DrivingHistory.DrivingLicenceTypeId", licence_value)
         print(f"Selected licence type: {licence_type}")
     except Exception as e:
         print(f"Error selecting licence type: {e}")
-    
+
     # Years licence held
     try:
-        years_category = axa_helpers.map_years_licence_held(data['licence_duration'])
+        years_category = axa_helpers.map_years_licence_held(data["licence_duration"])
         years_value = AXA_MAPPINGS["years_licence_held"][years_category]
         await driving_section.locator(
             'select[name="DrivingHistory.YearsLicenceHeldTypeId"]'
@@ -340,10 +350,10 @@ async def fill_driving_history(page, data):
         print(f"Selected years licence held: {years_category}")
     except Exception as e:
         print(f"Error selecting years licence held: {e}")
-    
+
     # Penalty points
     try:
-        has_penalty_points = data.get('has_penalty_points', False)
+        has_penalty_points = data.get("has_penalty_points", False)
         penalty_value = AXA_MAPPINGS["penalty_points"][has_penalty_points]
         await click_radio_label(
             "DrivingHistory.PenaltyPointsDetails.HasPenaltyPoints",
@@ -352,11 +362,11 @@ async def fill_driving_history(page, data):
         print(f"Selected penalty points: {penalty_value}")
     except Exception as e:
         print(f"Error selecting penalty points: {e}")
-    
+
     # Driving experience
     experience = None
     try:
-        experience = axa_helpers.map_driving_experience(data['driving_experience'])
+        experience = axa_helpers.map_driving_experience(data["driving_experience"])
         experience_value = AXA_MAPPINGS["driving_experience"][experience]
         await click_radio_label(
             "DrivingHistory.DrivingExperienceTypeId", experience_value
@@ -368,9 +378,9 @@ async def fill_driving_history(page, data):
     async def select_no_claims_years(field_name, years):
         years = max(0, min(int(years), 10))
         option_value = AXA_MAPPINGS["no_claims_discount_years"][years]
-        await driving_section.locator(
-            f'select[name="{field_name}"]'
-        ).select_option(value=option_value)
+        await driving_section.locator(f'select[name="{field_name}"]').select_option(
+            value=option_value
+        )
         return "10+" if years == 10 else years
 
     # AXA asks for NCD years after "Insured in own name" is selected.
@@ -393,9 +403,7 @@ async def fill_driving_history(page, data):
             )
             await named_driver_field.wait_for(state="visible", timeout=3_000)
             default_named_driver_years = (
-                data.get("no_claims_discount", 0)
-                if experience == "named_driver"
-                else 0
+                data.get("no_claims_discount", 0) if experience == "named_driver" else 0
             )
             display_years = await select_no_claims_years(
                 "DrivingHistory.NoClaimDiscountYearsAsNamedDriverTypeId",
@@ -484,39 +492,36 @@ async def fill_cover_details(page, data):
 
     # Cover start date
     try:
-        formatted_date = axa_helpers.format_date_for_axa(data['policy_start_date'])
-        await cover_section.locator(
-            'input[name="CoverDetails.CoverStartDate"]'
-        ).fill(formatted_date)
+        formatted_date = axa_helpers.format_date_for_axa(data["policy_start_date"])
+        await cover_section.locator('input[name="CoverDetails.CoverStartDate"]').fill(
+            formatted_date
+        )
         print(f"Filled cover start date: {formatted_date}")
     except Exception as e:
         print(f"Error filling cover start date: {e}")
-    
+
     # Accept assumptions
     try:
-        accept_assumptions = data.get('accept_terms', True)
+        accept_assumptions = data.get("accept_terms", True)
         await set_checkbox("ConfirmAssumptions", accept_assumptions)
         print(f"Set assumptions acceptance: {accept_assumptions}")
     except Exception as e:
         print(f"Error checking assumptions: {e}")
-    
+
     # Marketing consent (optional)
     try:
-        marketing_consent = data.get('marketing_consent', False)
-        await set_checkbox(
-            "CoverDetails.IsGdprConsentGiven", marketing_consent
-        )
+        marketing_consent = data.get("marketing_consent", False)
+        await set_checkbox("CoverDetails.IsGdprConsentGiven", marketing_consent)
         print(f"Set marketing consent: {marketing_consent}")
     except Exception as e:
         print(f"Error checking marketing consent: {e}")
-    
+
     # Data consent
     try:
-        data_consent = data.get('data_consent', True)
+        data_consent = data.get("data_consent", True)
         consent_value = AXA_MAPPINGS["data_consent"][data_consent]
         consent_input = cover_section.locator(
-            'input[name="CoverDetails.IsDataConsentGiven"]'
-            f'[value="{consent_value}"]'
+            'input[name="CoverDetails.IsDataConsentGiven"]' f'[value="{consent_value}"]'
         )
         await consent_input.wait_for(state="attached")
         await consent_input.evaluate("element => element.click()")
@@ -528,7 +533,7 @@ async def fill_cover_details(page, data):
 
     # AXA conditionally offers a phone call if the customer has questions.
     try:
-        phone_consent = data.get('phone_consent', True)
+        phone_consent = data.get("phone_consent", True)
         phone_consent_value = AXA_MAPPINGS["phone_consent"][phone_consent]
         phone_consent_input = cover_section.locator(
             'input[name="CoverDetails.IsPhoneConsentGiven"]'
@@ -555,22 +560,22 @@ async def submit_quote(page):
 async def extract_quotes(page, data):
     """Extract quote information and store results"""
     print("\n--- Extracting Quote Information ---")
-    
+
     results = []
-    
+
     try:
         # Wait for quote results to load
         await asyncio.sleep(10)
-        
+
         # Look for price elements
         price_selectors = [
             '[data-testid="price"]',
-            '.price',
-            '.quote-price',
+            ".price",
+            ".quote-price",
             '[class*="price"]',
-            '[id*="price"]'
+            '[id*="price"]',
         ]
-        
+
         price_found = False
         for selector in price_selectors:
             try:
@@ -584,20 +589,22 @@ async def extract_quotes(page, data):
                         break
             except:
                 continue
-        
+
         if not price_found:
             print("No price found with standard selectors")
             # Try to find any element containing Euro symbol or numbers
             page_content = await page.content()
             if "EUR" in page_content or "EUR" in page_content:
-                results.append("Comprehensive: Price found on page (could not extract exact value)")
+                results.append(
+                    "Comprehensive: Price found on page (could not extract exact value)"
+                )
             else:
                 results.append("Comprehensive: Price not found")
-        
+
     except Exception as e:
         print(f"Error extracting quotes: {e}")
         results.append("Comprehensive: Extraction failed")
-    
+
     # Store results in file
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open("insurance_quotes.txt", "a") as f:
@@ -610,12 +617,12 @@ async def extract_quotes(page, data):
         for result in results:
             f.write(f"{result}\n")
         f.write(f"{'='*50}\n\n")
-    
+
     print(f"AXA results saved to insurance_quotes.txt")
 
-page = None
+
 async def run(playwright: Playwright, data):
-    """Main automation function for AXA"""
+    """Run the AXA quote journey."""
     profile = random.choice(PROFILES)
     browser = await playwright.chromium.launch(
         headless=False,
@@ -641,7 +648,7 @@ async def run(playwright: Playwright, data):
                 "sec-ch-ua-platform": profile["platform"],
             }
         )
-        await page.goto("https://www.axa.ie/car-insurance/quote/your-details")
+        await page.goto(AXA_QUOTE_URL)
 
         await accept_cookies(page)
         await fill_vehicle_details(page, data)
@@ -657,6 +664,6 @@ async def run(playwright: Playwright, data):
 
 
 async def main(data):
-    """Main entry point for AXA automation"""
+    """Run AXA as a standalone provider."""
     async with async_playwright() as playwright:
         await run(playwright, data)

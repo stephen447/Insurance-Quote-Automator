@@ -4,10 +4,9 @@ from datetime import datetime
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
-import companies.an_post as an_post
 import companies.allianz as allianz
+import companies.an_post as an_post
 import companies.axa as axa
-
 
 PROVIDERS = {
     "an-post": ("An Post Insurance", an_post.run),
@@ -46,7 +45,7 @@ PERSONAL_INFO = {
         "city": "malahide",
         "county": "dublin",
         "country": "ireland",
-        "postal_code": "k36cf34"
+        "postal_code": "k36cf34",
     },
     # Licence section
     "licence_type": "full",
@@ -65,7 +64,7 @@ PERSONAL_INFO = {
     # Marketing
     "marketing_consent": False,
     # Terms
-    "accept_terms": True
+    "accept_terms": True,
 }
 
 
@@ -76,7 +75,9 @@ def initialise_report():
     with open("insurance_quotes.txt", "w") as f:
         f.write("Insurance Quote Comparison Report\n")
         f.write(f"Generated: {timestamp}\n")
-        f.write(f"Personal Details: {PERSONAL_INFO['first_name']} {PERSONAL_INFO['last_name']}\n")
+        f.write(
+            f"Personal Details: {PERSONAL_INFO['first_name']} {PERSONAL_INFO['last_name']}\n"
+        )
         f.write(f"Vehicle: {PERSONAL_INFO['car_registration']}\n")
         f.write(f"{'='*50}\n\n")
 

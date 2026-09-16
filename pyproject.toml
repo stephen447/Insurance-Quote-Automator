@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 88
+target-version = ["py37"]
+include = "\\.pyi?$"
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | __pycache__
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+py_version = 37
