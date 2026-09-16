@@ -616,123 +616,44 @@ async def extract_quotes(page, data):
 page = None
 async def run(playwright: Playwright, data):
     """Main automation function for AXA"""
-    # browser = await playwright.chromium.launch(headless=False, proxy=None)
-    # context = await browser.new_context(
-    #     viewport={"width": 1366, "height": 768},
-    #     locale="en-IE",
-    #     timezone_id="Europe/Dublin",
-    #     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
-    # )
-    # page = await context.new_page()
     profile = random.choice(PROFILES)
+    browser = await playwright.chromium.launch(
+        headless=False,
+        args=["--disable-blink-features=AutomationControlled"],
+    )
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=False,  # switch to False if you can afford it
-            args=[
-                "--no-sandbox",
-                "--disable-blink-features=AutomationControlled"
-            ]
-        )
-
+    try:
         context = await browser.new_context(
             user_agent=profile["user_agent"],
             viewport=profile["viewport"],
             screen=profile["screen"],
             locale=profile["locale"],
             timezone_id=profile["timezone"],
-            device_scale_factor=1
+            device_scale_factor=1,
         )
-
-        # Basic stealth patch (minimal but safer than fake-heavy hacks)
-        await context.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-
-            Object.defineProperty(navigator, 'languages', {
-                get: () => ['en-GB', 'en']
-            });
-
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => [1, 2, 3]
-            });
-
-            window.chrome = {
-                runtime: {}
-            };
-        """)
-
         page = await context.new_page()
 
-        await page.set_extra_http_headers({
-            "accept-language": profile["accept_language"],
-            "sec-ch-ua": profile["sec_ch_ua"],
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": profile["platform"]
-        })
-        await page.goto("https://www.axa.ie/car-insurance/")
-        await asyncio.sleep(5)
+        await page.set_extra_http_headers(
+            {
+                "accept-language": profile["accept_language"],
+                "sec-ch-ua": profile["sec_ch_ua"],
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": profile["platform"],
+            }
+        )
+        await page.goto("https://www.axa.ie/car-insurance/quote/your-details")
 
-
-
-
-
-    
-    # try:
-    #     # Navigate to AXA insurance quote page
-    #     print("Attempting to navigate to AXA car insurance page...")
-    #     try:
-    #         await page.goto("https://www.axa.ie/car-insurance/", wait_until="networkidle")
-    #         print("Successfully navigated to AXA car insurance page")
-    #     except Exception as e:
-    #         print(f"Failed to navigate to direct quote page: {e}")
-    #         print("Trying main page first...")
-    #         await page.goto("https://www.axa.ie/car-insurance/", timeout=30000)
-    #         await asyncio.sleep(3)
-        
-    #     # Check if we got blocked
-        
-    #     # Get quote price from user
-    #     quote_price = input("Enter AXA quote price (or press Enter to skip): ").strip()
-        
-    #     # Store results
-    #     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    #     with open("insurance_quotes.txt", "a") as f:
-    #         f.write(f"\n{'='*50}\n")
-    #         f.write(f"Company: AXA Insurance\n")
-    #         f.write(f"Quote Generated: {timestamp}\n")
-    #         f.write(f"Personal Details: {data['first_name']} {data['last_name']}\n")
-    #         f.write(f"Vehicle: {data['car_registration']}\n")
-    #         f.write(f"{'='*50}\n")
-    #         if quote_price:
-    #             f.write(f"Comprehensive: {quote_price}\n")
-    #             print(f"AXA quote price saved: {quote_price}")
-    #         else:
-    #             f.write("Status: Quote not completed manually\n")
-    #             print("AXA quote skipped")
-    #         f.write(f"{'='*50}\n\n")
-        
-    #     print("\nAXA processing complete. Browser will close in 30 seconds...")
-    #     print("Or press Ctrl+C to close immediately.")
-    #     await asyncio.sleep(30)
-        
-    # except Exception as e:
-    #     print(f"Error opening AXA page: {e}")
-        
-    #     # Store error message
-    #     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    #     with open("insurance_quotes.txt", "a") as f:
-    #         f.write(f"\n{'='*50}\n")
-    #         f.write(f"Company: AXA Insurance\n")
-    #         f.write(f"Quote Generated: {timestamp}\n")
-    #         f.write(f"Personal Details: {data['first_name']} {data['last_name']}\n")
-    #         f.write(f"Vehicle: {data['car_registration']}\n")
-    #         f.write(f"{'='*50}\n")
-    #         f.write("Status: Manual quote assistance failed\n")
-    #         f.write(f"Error: {e}\n")
-    #         f.write(f"{'='*50}\n\n")
-    
-    # finally:
-    #     await browser.close()
+        await accept_cookies(page)
+        await fill_vehicle_details(page, data)
+        await fill_personal_details(page, data)
+        await fill_driving_history(page, data)
+        await fill_claims_history(page, data)
+        await fill_discounts(page, data)
+        await fill_cover_details(page, data)
+        await submit_quote(page)
+        await extract_quotes(page, data)
+    finally:
+        await browser.close()
 
 
 async def main(data):
