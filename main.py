@@ -32,6 +32,8 @@ PERSONAL_INFO = {
     "email": "stephen.byrne@example.com",
     "phone": "083-8128391",
     "date_of_birth": "11-01-1999",
+    "gender": "male",
+    "employment_status": "employed",
     "occupation": "software developer",
     "car_registration": "12-D-12345",
     "car_value": 15000,
@@ -59,6 +61,8 @@ PERSONAL_INFO = {
     "country_of_most_recent_ncd": "ireland",
     "previous_insurer": "allianz",
     "policy_start_date": "01-10-2026",
+    "car_parked_at_home": True,
+    "existing_allianz_policy": False,
     "same_as_current_policy_end_date": True,
     "payment_type": "full",
     # Additional Drivers
