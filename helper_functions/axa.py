@@ -1,7 +1,5 @@
 """Helpers for the AXA Ireland quote journey."""
 
-from datetime import datetime
-
 
 def format_date_for_axa(date_string):
     """Convert date string to DD/MM/YYYY format for AXA"""
@@ -139,7 +137,7 @@ def map_driving_experience(driving_experience):
         return "own_name"  # Default assumption
 
 
-def map_licence_type(licence_type, duration):
+def map_licence_type(licence_type, _duration):
     """Map licence type and duration to AXA licence categories"""
     licence_lower = licence_type.lower()
 

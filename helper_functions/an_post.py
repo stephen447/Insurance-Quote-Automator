@@ -5,6 +5,7 @@ from datetime import datetime
 
 
 def format_mileage(mileage):
+    """Map annual mileage to the range expected by An Post."""
     # Need to be informat 0-7500, 10501-, 16501-, 18001- , 19501, 21001, 22501,.... 37501
     if mileage <= 7500:
         return "0-7500"
@@ -45,6 +46,7 @@ def format_mileage(mileage):
 
 
 def format_phone(phone):
+    """Normalize and validate an Irish phone number."""
     # Remove any non-digit characters
     phone = "".join(filter(str.isdigit, phone))
     # Ensure it's 10 digits
@@ -54,6 +56,7 @@ def format_phone(phone):
 
 
 def calculate_no_claims_discount(years):
+    """Map no-claims years to the maximum An Post option."""
     # Calculate the number of years between the start date and now
     if years > 8:
         return "9+"

@@ -1,6 +1,7 @@
 {
   "black-formatter.importStrategy": "useBundled",
   "isort.importStrategy": "useBundled",
+  "pylint.importStrategy": "useBundled",
   "[python]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "ms-python.black-formatter",

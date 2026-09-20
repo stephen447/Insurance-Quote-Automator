@@ -607,9 +607,9 @@ async def extract_quotes(page, data):
 
     # Store results in file
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open("insurance_quotes.txt", "a") as f:
+    with open("insurance_quotes.txt", "a", encoding="utf-8") as f:
         f.write(f"\n{'='*50}\n")
-        f.write(f"Company: AXA Insurance\n")
+        f.write("Company: AXA Insurance\n")
         f.write(f"Quote Generated: {timestamp}\n")
         f.write(f"Personal Details: {data['first_name']} {data['last_name']}\n")
         f.write(f"Vehicle: {data['car_registration']}\n")
@@ -618,7 +618,7 @@ async def extract_quotes(page, data):
             f.write(f"{result}\n")
         f.write(f"{'='*50}\n\n")
 
-    print(f"AXA results saved to insurance_quotes.txt")
+    print("AXA results saved to insurance_quotes.txt")
 
 
 async def run(playwright: Playwright, data):

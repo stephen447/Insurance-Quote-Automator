@@ -1,3 +1,5 @@
+"""Run insurance quote automation for the selected providers."""
+
 import asyncio
 from datetime import datetime
 
@@ -72,7 +74,7 @@ def initialise_report():
     """Create a fresh report for the current comparison run."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    with open("insurance_quotes.txt", "w") as f:
+    with open("insurance_quotes.txt", "w", encoding="utf-8") as f:
         f.write("Insurance Quote Comparison Report\n")
         f.write(f"Generated: {timestamp}\n")
         f.write(
@@ -86,7 +88,7 @@ def record_provider_failure(provider_name, error):
     """Record a failed provider without stopping the comparison run."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    with open("insurance_quotes.txt", "a") as f:
+    with open("insurance_quotes.txt", "a", encoding="utf-8") as f:
         f.write(f"Company: {provider_name}\n")
         f.write(f"Quote Attempted: {timestamp}\n")
         f.write("Status: Failed\n")
@@ -119,6 +121,7 @@ async def run_selected_providers():
 
 
 def main():
+    """Initialize the report and run the configured providers."""
     initialise_report()
     asyncio.run(run_selected_providers())
 

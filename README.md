@@ -48,11 +48,12 @@ isort .
 black .
 isort --check-only .
 black --check .
+pylint main.py companies helper_functions data_maps an_post.py
 ```
 
-Once installed, the pre-commit hook runs isort and Black on staged Python files
-before every commit. If either formatter changes a file, review and stage the
-change, then commit again. Run the checks against the entire repository with:
+Once installed, the pre-commit hook runs isort, Black, and Pylint on staged
+Python files before every commit. If a formatter changes a file, review and
+stage the change, then commit again. Run all checks against the repository with:
 
 ```bash
 pre-commit run --all-files

@@ -270,15 +270,15 @@ async def run(playwright: Playwright, data):
 
     # Store results in text file
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open("insurance_quotes.txt", "a") as f:
-        f.write(f"Company: An Post Insurance\n")
+    with open("insurance_quotes.txt", "a", encoding="utf-8") as f:
+        f.write("Company: An Post Insurance\n")
         f.write(f"Quote Generated: {timestamp}\n")
         f.write(f"{'='*50}\n")
         for result in results:
             f.write(f"{result}\n")
         f.write(f"{'='*50}\n\n")
 
-    print(f"\nResults saved to insurance_quotes.txt")
+    print("\nResults saved to insurance_quotes.txt")
 
     # Keep browser open to see results
     await asyncio.sleep(10)

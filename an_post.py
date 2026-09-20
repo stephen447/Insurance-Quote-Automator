@@ -1,3 +1,5 @@
+"""Legacy standalone An Post quote automation."""
+
 import asyncio
 from datetime import datetime
 
@@ -180,6 +182,7 @@ async def click_checkbox(page, checkbox_text_contains):
 
 
 async def run(playwright: Playwright, data):
+    """Run the legacy standalone An Post quote journey."""
     browser = await playwright.chromium.launch(headless=False)
     page = await browser.new_page()
     await page.goto("https://insurance.anpostinsurance.ie/v2/equote/motor/risk")
@@ -380,5 +383,6 @@ async def run(playwright: Playwright, data):
 
 
 async def main(data):
+    """Run the legacy An Post automation with Playwright."""
     async with async_playwright() as playwright:
         await run(playwright, data)

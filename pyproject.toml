@@ -15,3 +15,26 @@ extend-exclude = '''
 profile = "black"
 line_length = 88
 py_version = 37
+
+[tool.pylint.main]
+py-version = "3.12"
+persistent = false
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.pylint.messages_control]
+disable = [
+  "bare-except",
+  "broad-exception-caught",
+  "broad-exception-raised",
+  "consider-using-from-import",
+  "duplicate-code",
+  "line-too-long",
+  "no-else-return",
+  "raise-missing-from",
+  "too-many-branches",
+  "too-many-locals",
+  "too-many-return-statements",
+  "too-many-statements",
+]
