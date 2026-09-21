@@ -97,3 +97,11 @@ def business_mileage_value(annual_business_mileage):
     if mileage <= 10_000:
         return "M02"
     return "M03"
+
+
+def format_ncd_years(no_claims_years):
+    """Format NCD years using Allianz's capped 9+ dropdown label."""
+    years = int(no_claims_years)
+    if years < 0:
+        raise ValueError("No Claims Discount years cannot be negative")
+    return "9+" if years >= 9 else str(years)

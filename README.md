@@ -14,7 +14,7 @@ A Python automation tool that fills out insurance quote forms on Irish insurance
 
 - **An Post Insurance** - Fully automated quote generation
 - **AXA Insurance** - Automated quote generation
-- **Allianz Insurance** - Your Details and Car Details pages automated
+- **Allianz Insurance** - Automated through the main Driver History experience paths
 
 ## Requirements
 
@@ -86,7 +86,7 @@ pre-commit run --all-files
    # AXA only
    SELECTED_PROVIDERS = ("axa",)
 
-   # Allianz only (automates the first two pages through to Driver Details)
+   # Allianz only (automates through Driver History to Cover Selection)
    SELECTED_PROVIDERS = ("allianz",)
 
    # Both companies
@@ -128,6 +128,8 @@ The `PERSONAL_INFO` dictionary supports the following fields:
 **License & Insurance:**
 
 - `licence_type`, `licence_duration`, `has_penalty_points`
+- `penalty_points`, `driving_test_passed_in_ireland_uk`, `driving_test_year`
+- `latest_driving_experience`, `driving_experience_years`, `has_claims`
 - `driving_experience`, `no_claims_discount`, `country_of_most_recent_ncd`
 - `previous_insurer`, `policy_start_date`, `same_as_current_policy_end_date`, `payment_type`
 

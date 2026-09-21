@@ -6,6 +6,7 @@ from helper_functions.allianz import (
     business_mileage_value,
     format_date,
     format_mobile,
+    format_ncd_years,
     format_registration,
     gender_from_data,
     mileage_option_matches,
@@ -65,6 +66,12 @@ class AllianzHelperTests(unittest.TestCase):
         self.assertEqual(business_mileage_value(2_000), "M01")
         self.assertEqual(business_mileage_value(7_500), "M02")
         self.assertEqual(business_mileage_value(12_000), "M03")
+
+    def test_ncd_years_uses_capped_allianz_label(self):
+        """Test ordinary NCD years and Allianz's maximum 9+ band."""
+        self.assertEqual(format_ncd_years(4), "4")
+        self.assertEqual(format_ncd_years(9), "9+")
+        self.assertEqual(format_ncd_years(12), "9+")
 
 
 if __name__ == "__main__":

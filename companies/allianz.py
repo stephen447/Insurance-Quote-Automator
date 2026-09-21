@@ -10,6 +10,7 @@ from helper_functions.allianz import (
     business_mileage_value,
     format_date,
     format_mobile,
+    format_ncd_years,
     format_registration,
     gender_from_data,
     mileage_option_matches,
@@ -246,8 +247,133 @@ async def fill_personal_details(page, data):
 
 
 async def fill_driving_history(page, data):
-    """Fill the Allianz driving-history section."""
-    raise NotImplementedError("Allianz driving history is not implemented yet")
+    """Fill Allianz's Driver History happy path."""
+    print("\n--- Filling Allianz Driver History page ---")
+
+    if data.get("add_additional_driver", False):
+        raise NotImplementedError(
+            "Allianz additional-driver details are outside the happy path"
+        )
+    if data.get("has_claims", False):
+        raise NotImplementedError("Allianz claim details are outside the happy path")
+
+    async def select_toggle(track_id, value):
+        toggle = page.locator(
+            f'nx-radio-toggle-button[trackid="{track_id}"][trackvalue="{value}"]'
+        )
+        await toggle.wait_for(state="visible")
+        await toggle.locator("label").click()
+
+    async def select_dropdown(control_name, desired_value):
+        dropdown = page.locator(
+            f'azire-generic-dropdown[nameofcontrol="{control_name}"] nx-dropdown'
+        )
+        await dropdown.wait_for(state="visible")
+        await dropdown.click()
+        options = page.locator(
+            "[role='listbox'] [role='option']:visible, nx-dropdown-item:visible"
+        )
+        await options.first.wait_for(state="visible")
+        option_labels = await options.all_inner_texts()
+        matching_index = next(
+            (
+                index
+                for index, label in enumerate(option_labels)
+                if label.strip().casefold() == str(desired_value).strip().casefold()
+            ),
+            None,
+        )
+        if matching_index is None:
+            labels = ", ".join(label.strip() for label in option_labels)
+            raise ValueError(
+                f"No Allianz {control_name} option matches {desired_value}: {labels}"
+            )
+        await options.nth(matching_index).click()
+
+    experience = data.get("latest_driving_experience", "policy_own_name_ireland")
+    try:
+        experience_value = ALLIANZ_MAPPINGS["driving_experience"][experience]
+    except KeyError as error:
+        allowed = ", ".join(ALLIANZ_MAPPINGS["driving_experience"])
+        raise ValueError(
+            f"Unsupported Allianz driving experience '{experience}'; use {allowed}"
+        ) from error
+    if experience_value not in ("D01", "D02", "D03", "D04", "D05"):
+        raise NotImplementedError(
+            "This Allianz driving-experience path is not implemented yet"
+        )
+    await select_toggle("latestDrivingExperience", experience_value)
+
+    if experience_value == "D01":
+        no_claims_years = data.get("no_claims_discount")
+        if no_claims_years is None:
+            raise ValueError("Allianz requires 'no_claims_discount' for this path")
+        ncd_label = format_ncd_years(no_claims_years)
+        await select_dropdown("ncdYears", ncd_label)
+    elif experience_value == "D02":
+        no_claims_years = data.get("no_claims_discount")
+        if no_claims_years is None:
+            raise ValueError("Allianz requires 'no_claims_discount' for this path")
+        ncd_label = format_ncd_years(no_claims_years)
+        ncd_country = data.get("country_of_most_recent_ncd", "").strip()
+        if not ncd_country or ncd_country.casefold() == "ireland":
+            raise ValueError(
+                "Allianz requires a country outside Ireland in "
+                "'country_of_most_recent_ncd'"
+            )
+        await select_dropdown("countriesOutsideIrelandOrUK", ncd_country)
+        await select_dropdown("ncdYearsOutSideIrelandOrUK", ncd_label)
+    else:
+        experience_years = data.get("driving_experience_years")
+        if experience_years is None:
+            raise ValueError(
+                "Allianz requires 'driving_experience_years' for named-driver, "
+                "company-car, and motor-trade experience"
+            )
+        await select_dropdown(
+            "motorTradePolicyInYears", format_ncd_years(experience_years)
+        )
+
+    licence_type = data.get("licence_type", "full")
+    try:
+        licence_value = ALLIANZ_MAPPINGS["licence_type"][licence_type]
+    except KeyError as error:
+        allowed = ", ".join(ALLIANZ_MAPPINGS["licence_type"])
+        raise ValueError(
+            f"Unsupported Allianz licence type '{licence_type}'; use {allowed}"
+        ) from error
+    if licence_value != "C":
+        raise NotImplementedError(
+            "Only Allianz's full Irish licence path is implemented"
+        )
+    await select_toggle("licenceType", licence_value)
+
+    test_passed = data.get("driving_test_passed_in_ireland_uk", True)
+    await select_toggle("testPassedToggle", str(test_passed).lower())
+    if test_passed:
+        test_year = data.get("driving_test_year")
+        if test_year is None:
+            raise ValueError(
+                "Allianz requires 'driving_test_year' when the test was passed"
+            )
+        await page.locator('input[formcontrolname="driversTestPassedOn"]').fill(
+            str(test_year)
+        )
+
+    penalty_points = int(data.get("penalty_points", 0))
+    if penalty_points < 0:
+        raise ValueError("Penalty points cannot be negative")
+    penalty_stepper = page.locator(
+        'azire-simple-stepper[nameofcontrol="totalPenaltyPoints"] input[type="number"]'
+    )
+    await penalty_stepper.fill(str(penalty_points))
+
+    await select_toggle(
+        "hasAdditionalDrivers",
+        str(data.get("add_additional_driver", False)).lower(),
+    )
+    await select_toggle("hasClaims", str(data.get("has_claims", False)).lower())
+    print("Completed Allianz Driver History fields")
 
 
 async def fill_cover_details(page, data):
@@ -273,13 +399,22 @@ async def submit_vehicle_details(page):
     print("Proceeded to Allianz Driver Details")
 
 
+async def submit_driving_history(page):
+    """Submit Driver History and wait for Allianz's Cover Selection page."""
+    button = page.locator("#clientDetailsSubmit")
+    await button.wait_for(state="visible")
+    await button.click()
+    await button.wait_for(state="hidden", timeout=15_000)
+    print("Proceeded to Allianz Cover Selection")
+
+
 async def extract_quote(page, data):
     """Extract and persist the Allianz quote result."""
     raise NotImplementedError("Allianz quote extraction is not implemented yet")
 
 
 async def run(playwright: Playwright, data):
-    """Automate Allianz's first two quote pages."""
+    """Automate Allianz through the Driver History happy path."""
     browser = await playwright.chromium.launch(headless=False)
 
     try:
@@ -289,6 +424,8 @@ async def run(playwright: Playwright, data):
         await submit_quote(page)
         await fill_vehicle_details(page, data)
         await submit_vehicle_details(page)
+        await fill_driving_history(page, data)
+        await submit_driving_history(page)
     finally:
         # sleep for 10 seconds
         time.sleep(10)
