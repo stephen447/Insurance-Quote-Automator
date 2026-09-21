@@ -14,7 +14,7 @@ A Python automation tool that fills out insurance quote forms on Irish insurance
 
 - **An Post Insurance** - Fully automated quote generation
 - **AXA Insurance** - Automated quote generation
-- **Allianz Insurance** - First (Your Details) page automated
+- **Allianz Insurance** - Your Details and Car Details pages automated
 
 ## Requirements
 
@@ -86,7 +86,7 @@ pre-commit run --all-files
    # AXA only
    SELECTED_PROVIDERS = ("axa",)
 
-   # Allianz only (automates the first page through to Car Details)
+   # Allianz only (automates the first two pages through to Driver Details)
    SELECTED_PROVIDERS = ("allianz",)
 
    # Both companies
@@ -118,6 +118,8 @@ The `PERSONAL_INFO` dictionary supports the following fields:
 
 - `car_registration`, `car_value`, `car_purchase_date`, `estimated_mileage`
 - `right_hand_drive`, `registered_in_ireland`, `is_imported`, `registered_owner`, `car_usage`
+- `business_use`, `commuting`, `business_mileage`, `soliciting_orders`
+- `regular_use_other_vehicle`, `other_vehicle_types`
 
 **Address:**
 

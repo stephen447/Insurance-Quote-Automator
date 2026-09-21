@@ -14,6 +14,12 @@ ALLIANZ_MAPPINGS = {
         "homemaker": "Homemaker",
         "unemployed": "Unemployed",
     },
+    "other_vehicle_types": {
+        "own_vehicle": "OV",
+        "company_vehicle": "CV",
+        "household_vehicle": "VI",
+        "outside_household_vehicle": "VO",
+    },
     "car_usage": {},
     "licence_type": {},
     "driving_experience": {},

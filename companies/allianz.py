@@ -7,9 +7,13 @@ from playwright.async_api import Playwright, async_playwright
 from data_maps.allianz import ALLIANZ_MAPPINGS
 from helper_functions.allianz import (
     accept_cookies,
+    business_mileage_value,
     format_date,
     format_mobile,
+    format_registration,
     gender_from_data,
+    mileage_option_matches,
+    purchase_year,
 )
 
 ALLIANZ_QUOTE_URL = "https://quote.allianz.ie/motorb2cui/"
@@ -32,8 +36,108 @@ async def open_quote_form(page):
 
 
 async def fill_vehicle_details(page, data):
-    """Fill the Allianz vehicle section."""
-    raise NotImplementedError("Allianz vehicle details are not implemented yet")
+    """Fill every field on Allianz's second, Car Details, page."""
+    print("\n--- Filling Allianz Car Details page ---")
+
+    required_fields = (
+        "car_registration",
+        "car_value",
+        "car_purchase_date",
+        "estimated_mileage",
+    )
+    missing = [field for field in required_fields if data.get(field) is None]
+    if missing:
+        raise ValueError(f"Missing Allianz car-page data: {', '.join(missing)}")
+
+    async def select_toggle(track_id, value):
+        toggle = page.locator(
+            f'nx-radio-toggle-button[trackid="{track_id}"][trackvalue="{value}"]'
+        )
+        await toggle.wait_for(state="visible")
+        await toggle.locator("label").click()
+
+    registration = page.locator('input[formcontrolname="carRegistrationNumber"]')
+    await registration.wait_for(state="visible")
+    registration_value = format_registration(data["car_registration"])
+    if not registration_value:
+        raise ValueError("Allianz requires an alphanumeric car registration")
+    await registration.fill(registration_value)
+    registration_search = page.locator("azire-car-registration nx-page-search")
+    await registration_search.get_by_role("button", name="Find", exact=True).click()
+    await page.locator("azire-vrn-selected-car nx-message").wait_for(
+        state="visible", timeout=15_000
+    )
+
+    await page.locator('input[formcontrolname="value"]').fill(str(data["car_value"]))
+    await page.locator('input[formcontrolname="yearVehiclePurchased"]').fill(
+        purchase_year(data["car_purchase_date"])
+    )
+
+    mileage_dropdown = page.locator(
+        'azire-generic-dropdown[nameofcontrol="annualMileage"] nx-dropdown'
+    )
+    await mileage_dropdown.click()
+    mileage_options = page.locator(
+        "[role='listbox'] [role='option']:visible, nx-dropdown-item:visible"
+    )
+    await mileage_options.first.wait_for(state="visible")
+    option_labels = await mileage_options.all_inner_texts()
+    matching_index = next(
+        (
+            index
+            for index, label in enumerate(option_labels)
+            if mileage_option_matches(label, data["estimated_mileage"])
+        ),
+        None,
+    )
+    if matching_index is None:
+        labels = ", ".join(label.strip() for label in option_labels)
+        raise ValueError(
+            f"No Allianz mileage option contains {data['estimated_mileage']}: {labels}"
+        )
+    await mileage_options.nth(matching_index).click()
+
+    business_use = data.get("business_use", False)
+    await select_toggle("businessUse", str(business_use).lower())
+    if business_use:
+        if data.get("business_mileage") is None:
+            raise ValueError("Allianz requires 'business_mileage' for business use")
+        await select_toggle(
+            "businessMileage", business_mileage_value(data["business_mileage"])
+        )
+        await select_toggle(
+            "solicitingOrders",
+            str(data.get("soliciting_orders", False)).lower(),
+        )
+    else:
+        await select_toggle(
+            "commuting",
+            str(data.get("commuting", False)).lower(),
+        )
+
+    other_vehicle_access = data.get("regular_use_other_vehicle", False)
+    await select_toggle("accessToAnotherCar", str(other_vehicle_access).lower())
+    if other_vehicle_access:
+        vehicle_types = data.get("other_vehicle_types", [])
+        if not vehicle_types:
+            raise ValueError(
+                "Allianz requires at least one 'other_vehicle_types' value when "
+                "regular use of another vehicle is selected"
+            )
+        for vehicle_type in vehicle_types:
+            try:
+                form_value = ALLIANZ_MAPPINGS["other_vehicle_types"][vehicle_type]
+            except KeyError as error:
+                allowed = ", ".join(ALLIANZ_MAPPINGS["other_vehicle_types"])
+                raise ValueError(
+                    f"Unsupported other vehicle type '{vehicle_type}'; use {allowed}"
+                ) from error
+            checkbox = page.locator(
+                'input[name="accessToAnotherCarValue"]' f'[value="{form_value}"]'
+            )
+            await checkbox.set_checked(True, force=True)
+
+    print("Completed Allianz Car Details fields")
 
 
 async def fill_personal_details(page, data):
@@ -140,9 +244,6 @@ async def fill_personal_details(page, data):
     await terms.set_checked(data.get("accept_terms", False), force=True)
     print("Completed Allianz Your Details fields")
 
-    # sleep for 10 seconds
-    time.sleep(6)
-
 
 async def fill_driving_history(page, data):
     """Fill the Allianz driving-history section."""
@@ -163,13 +264,22 @@ async def submit_quote(page):
     print("Proceeded to Allianz Car Details")
 
 
+async def submit_vehicle_details(page):
+    """Submit the second page and wait for Allianz's Driver Details page."""
+    button = page.locator("#clientDetailsSubmit")
+    await button.wait_for(state="visible")
+    await button.click()
+    await button.wait_for(state="hidden", timeout=15_000)
+    print("Proceeded to Allianz Driver Details")
+
+
 async def extract_quote(page, data):
     """Extract and persist the Allianz quote result."""
     raise NotImplementedError("Allianz quote extraction is not implemented yet")
 
 
 async def run(playwright: Playwright, data):
-    """Automate Allianz's first quote page."""
+    """Automate Allianz's first two quote pages."""
     browser = await playwright.chromium.launch(headless=False)
 
     try:
@@ -177,7 +287,11 @@ async def run(playwright: Playwright, data):
         await open_quote_form(page)
         await fill_personal_details(page, data)
         await submit_quote(page)
+        await fill_vehicle_details(page, data)
+        await submit_vehicle_details(page)
     finally:
+        # sleep for 10 seconds
+        time.sleep(10)
         await browser.close()
 
 
