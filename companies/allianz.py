@@ -1,6 +1,7 @@
 """Allianz Ireland car insurance automation."""
 
 import time
+from datetime import datetime
 
 from playwright.async_api import Playwright, async_playwright
 
@@ -409,8 +410,83 @@ async def submit_driving_history(page):
 
 
 async def extract_quote(page, data):
-    """Extract and persist the Allianz quote result."""
-    raise NotImplementedError("Allianz quote extraction is not implemented yet")
+    """Extract monthly and annual Allianz prices and append them to the report."""
+    print("\n--- Extracting Allianz prices ---")
+    price_group = page.locator(".price-group")
+    await price_group.wait_for(state="visible", timeout=20_000)
+
+    async def select_schedule(schedule):
+        toggle = page.locator(
+            'nx-radio-toggle-button[trackid="paymentSchedule"]'
+            f'[trackvalue="{schedule}"]'
+        )
+        schedule_input = toggle.locator('input[type="radio"]')
+        was_selected = await schedule_input.is_checked()
+        previous_prices = await price_group.inner_text()
+        await toggle.locator("label").click()
+        await page.wait_for_function(
+            """schedule => [...document.querySelectorAll(
+                'nx-radio-toggle-button[trackid="paymentSchedule"]'
+            )].find(toggle => toggle.getAttribute('trackvalue') === schedule)
+                ?.querySelector('input')?.checked""",
+            arg=schedule,
+        )
+        if not was_selected:
+            await page.wait_for_function(
+                """previous => document.querySelector('.price-group')
+                    ?.innerText !== previous""",
+                arg=previous_prices,
+            )
+
+    async def read_price_cards():
+        results = []
+        cards = price_group.locator(".premium")
+        for index in range(await cards.count()):
+            pricing = cards.nth(index).locator(".pricing")
+            cover_name = " ".join(
+                (await pricing.locator("h3").first.inner_text()).split()
+            )
+            price = " ".join(
+                (await pricing.locator("h1 .bundle-link").first.inner_text()).split()
+            )
+            detail_lines = []
+            for line in (await pricing.inner_text()).splitlines():
+                normalized = " ".join(line.split())
+                if normalized and normalized not in (cover_name, price):
+                    detail_lines.append(normalized)
+            results.append(
+                {
+                    "cover": cover_name,
+                    "price": price,
+                    "details": detail_lines,
+                }
+            )
+        if not results:
+            raise RuntimeError("No Allianz price cards were found")
+        return results
+
+    prices = {}
+    for schedule in ("Monthly", "Annual"):
+        await select_schedule(schedule)
+        prices[schedule] = await read_price_cards()
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open("insurance_quotes.txt", "a", encoding="utf-8") as report:
+        report.write("Company: Allianz Insurance\n")
+        report.write(f"Quote Generated: {timestamp}\n")
+        report.write(f"Vehicle: {data['car_registration']}\n")
+        report.write(f"{'=' * 50}\n")
+        for schedule, quote_cards in prices.items():
+            report.write(f"Payment Schedule: {schedule}\n")
+            for card in quote_cards:
+                report.write(f"  {card['cover']}: {card['price']}\n")
+                for detail in card["details"]:
+                    report.write(f"    {detail}\n")
+            report.write("\n")
+        report.write(f"{'=' * 50}\n\n")
+
+    print("Saved Allianz monthly and annual prices to insurance_quotes.txt")
+    return prices
 
 
 async def run(playwright: Playwright, data):
@@ -426,6 +502,7 @@ async def run(playwright: Playwright, data):
         await submit_vehicle_details(page)
         await fill_driving_history(page, data)
         await submit_driving_history(page)
+        await extract_quote(page, data)
     finally:
         # sleep for 10 seconds
         time.sleep(10)

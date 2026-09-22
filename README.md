@@ -14,7 +14,7 @@ A Python automation tool that fills out insurance quote forms on Irish insurance
 
 - **An Post Insurance** - Fully automated quote generation
 - **AXA Insurance** - Automated quote generation
-- **Allianz Insurance** - Automated through the main Driver History experience paths
+- **Allianz Insurance** - Automates the main journey and records monthly/annual prices
 
 ## Requirements
 
