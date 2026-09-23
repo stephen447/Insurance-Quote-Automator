@@ -7,6 +7,7 @@ from playwright.async_api import Playwright, async_playwright
 
 import helper_functions.axa as axa_helpers
 from data_maps.axa import AXA_MAPPINGS
+from helper_functions.excel_report import QuoteRun, upsert_provider_quotes
 
 AXA_QUOTE_URL = "https://www.axa.ie/car-insurance/quote/your-details"
 
@@ -648,7 +649,14 @@ async def extract_quotes(page, data):
             f.write(f"{result['cover']} ({result['payment']}): {result['price']}\n")
         f.write(f"{'='*50}\n\n")
 
-    print("AXA results saved to insurance_quotes.txt")
+    upsert_provider_quotes(
+        "AXA Insurance",
+        data,
+        results,
+        run=QuoteRun(quote_reference=quote_reference.strip()),
+    )
+
+    print("AXA results saved to insurance_quotes.txt and insurance_quotes.xlsx")
     return results
 
 

@@ -20,6 +20,7 @@ from helper_functions.an_post import (
     select_dropdown_option,
     select_tile_option,
 )
+from helper_functions.excel_report import upsert_provider_quotes
 
 AN_POST_QUOTE_URL = "https://insurance.anpostinsurance.ie/v2/equote/motor/risk"
 
@@ -240,15 +241,18 @@ async def run(playwright: Playwright, data):
 
     # Extract and store initial price (Comprehensive)
     results = []
+    excel_results = []
 
     try:
         initial_price_element = page.locator("#breadCrumb-Price")
         initial_price = await initial_price_element.inner_text()
         print(f"Initial Comprehensive Price: {initial_price}")
         results.append(f"Comprehensive: {initial_price}")
+        excel_results.append({"cover": "Comprehensive", "price": initial_price})
     except:
         print("Could not extract initial price")
         results.append("Comprehensive: Price not found")
+        excel_results.append({"cover": "Comprehensive", "details": "Price not found"})
 
     # Select Third Party Fire & Theft
     try:
@@ -263,10 +267,14 @@ async def run(playwright: Playwright, data):
         tpft_price = await tpft_price_element.inner_text()
         print(f"Third Party Fire & Theft Price: {tpft_price}")
         results.append(f"Third Party Fire & Theft: {tpft_price}")
+        excel_results.append({"cover": "Third Party Fire & Theft", "price": tpft_price})
     except Exception as e:
         print("Could not select Third Party Fire & Theft or extract price")
         print(f"Exception: {e}")
         results.append("Third Party Fire & Theft: Price not found")
+        excel_results.append(
+            {"cover": "Third Party Fire & Theft", "details": "Price not found"}
+        )
 
     # Store results in text file
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -278,7 +286,9 @@ async def run(playwright: Playwright, data):
             f.write(f"{result}\n")
         f.write(f"{'='*50}\n\n")
 
-    print("\nResults saved to insurance_quotes.txt")
+    upsert_provider_quotes("An Post Insurance", data, excel_results)
+
+    print("\nResults saved to insurance_quotes.txt and insurance_quotes.xlsx")
 
     # Keep browser open to see results
     await asyncio.sleep(10)

@@ -9,6 +9,7 @@ A Python automation tool that fills out insurance quote forms on Irish insurance
 - **Data Validation**: Includes helper functions for data formatting and validation (mileage formatting, no-claims discount calculation)
 - **Async Execution**: Uses asyncio for efficient browser automation
 - **Configurable Personal Data**: Easy-to-modify personal information dictionary
+- **Persistent Excel Results**: Updates only the insurers run in the current comparison
 
 ## Supported Insurers
 
@@ -18,7 +19,7 @@ A Python automation tool that fills out insurance quote forms on Irish insurance
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.8+
 - Playwright
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 
@@ -102,6 +103,14 @@ pre-commit run --all-files
    - Navigate to An Post Insurance
    - Fill out the quote form with your information
    - Submit the form and display the results
+   - Update `insurance_quotes.xlsx` while preserving insurers not run this time
+
+### Excel results
+
+`insurance_quotes.xlsx` is persistent across runs. Each selected insurer replaces
+only its own previous rows. Results for insurers omitted from `SELECTED_PROVIDERS`
+remain unchanged. Prices are stored as numeric EUR values so they can be sorted,
+filtered, and used in formulas.
 
 ## Configuration
 

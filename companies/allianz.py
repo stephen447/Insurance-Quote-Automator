@@ -17,6 +17,7 @@ from helper_functions.allianz import (
     mileage_option_matches,
     purchase_year,
 )
+from helper_functions.excel_report import upsert_provider_quotes
 
 ALLIANZ_QUOTE_URL = "https://quote.allianz.ie/motorb2cui/"
 
@@ -485,7 +486,20 @@ async def extract_quote(page, data):
             report.write("\n")
         report.write(f"{'=' * 50}\n\n")
 
-    print("Saved Allianz monthly and annual prices to insurance_quotes.txt")
+    excel_quotes = []
+    for schedule, quote_cards in prices.items():
+        for card in quote_cards:
+            excel_quotes.append(
+                {
+                    "cover": card["cover"],
+                    "payment": schedule,
+                    "price": card["price"],
+                    "details": card["details"],
+                }
+            )
+    upsert_provider_quotes("Allianz Insurance", data, excel_quotes)
+
+    print("Saved Allianz prices to insurance_quotes.txt and insurance_quotes.xlsx")
     return prices
 
 

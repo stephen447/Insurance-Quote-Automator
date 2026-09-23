@@ -9,6 +9,10 @@ from playwright_stealth import Stealth
 import companies.allianz as allianz
 import companies.an_post as an_post
 import companies.axa as axa
+from helper_functions.excel_report import ensure_quote_workbook
+from helper_functions.excel_report import (
+    record_provider_failure as record_excel_failure,
+)
 
 PROVIDERS = {
     "an-post": ("An Post Insurance", an_post.run),
@@ -22,7 +26,7 @@ PROVIDERS = {
 #   ("allianz",)        - Allianz only (automation in progress)
 #   ("axa",)            - AXA only
 #   ("an-post", "axa") - multiple companies
-SELECTED_PROVIDERS = ("axa",)
+SELECTED_PROVIDERS = ("an-post",)
 
 # Personal information dictionary
 PERSONAL_INFO = {
@@ -88,7 +92,7 @@ PERSONAL_INFO = {
 
 
 def initialise_report():
-    """Create a fresh report for the current comparison run."""
+    """Create the text report and preserve the persistent Excel report."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with open("insurance_quotes.txt", "w", encoding="utf-8") as f:
@@ -99,6 +103,8 @@ def initialise_report():
         )
         f.write(f"Vehicle: {PERSONAL_INFO['car_registration']}\n")
         f.write(f"{'='*50}\n\n")
+
+    ensure_quote_workbook()
 
 
 def record_provider_failure(provider_name, error):
@@ -111,6 +117,8 @@ def record_provider_failure(provider_name, error):
         f.write("Status: Failed\n")
         f.write(f"Error: {error}\n")
         f.write(f"{'='*50}\n\n")
+
+    record_excel_failure(provider_name, PERSONAL_INFO, error)
 
 
 async def run_selected_providers():
