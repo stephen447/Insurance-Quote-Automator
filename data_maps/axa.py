@@ -98,4 +98,12 @@ AXA_MAPPINGS = {
     "marketing_consent": {True: "checked", False: "unchecked"},
     "data_consent": {True: "true", False: "false"},
     "phone_consent": {True: "true", False: "false"},
+    "cover_type": {
+        "Comprehensive": "10246001",
+        "Third party, fire & theft": "10246002",
+    },
+    "quote_payment_type": {
+        "Pay in full": "10265001",
+        "Pay monthly": "10265002",
+    },
 }

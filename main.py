@@ -81,6 +81,7 @@ PERSONAL_INFO = {
     "add_additional_driver": False,
     # Marketing
     "marketing_consent": False,
+    "phone_consent": False,
     # Terms
     "accept_terms": True,
 }

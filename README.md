@@ -135,7 +135,7 @@ The `PERSONAL_INFO` dictionary supports the following fields:
 
 **Additional Options:**
 
-- `add_additional_driver`, `marketing_consent`, `accept_terms`
+- `add_additional_driver`, `marketing_consent`, `phone_consent`, `accept_terms`
 - `car_parked_at_home`, `existing_allianz_policy`
 
 ## Project Structure

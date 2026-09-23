@@ -1,6 +1,5 @@
 """AXA Ireland car quote automation."""
 
-import asyncio
 import random
 from datetime import datetime
 
@@ -533,19 +532,24 @@ async def fill_cover_details(page, data):
 
     # AXA conditionally offers a phone call if the customer has questions.
     try:
-        phone_consent = data.get("phone_consent", True)
+        phone_consent = data.get("phone_consent", False)
         phone_consent_value = AXA_MAPPINGS["phone_consent"][phone_consent]
-        phone_consent_input = cover_section.locator(
+        phone_consent_input = page.locator(
             'input[name="CoverDetails.IsPhoneConsentGiven"]'
             f'[value="{phone_consent_value}"]'
         )
-        await phone_consent_input.wait_for(state="attached", timeout=3_000)
-        await phone_consent_input.evaluate("element => element.click()")
+        await phone_consent_input.wait_for(state="attached", timeout=10_000)
+        phone_consent_id = await phone_consent_input.get_attribute("id")
+        if not phone_consent_id:
+            raise RuntimeError("AXA phone-consent input has no associated label")
+        phone_consent_label = page.locator(f'label[for="{phone_consent_id}"]')
+        await phone_consent_label.wait_for(state="visible", timeout=10_000)
+        await phone_consent_label.click()
         if not await phone_consent_input.is_checked():
             raise RuntimeError("AXA did not register the phone-help selection")
         print(f"Selected phone help consent: {phone_consent}")
     except Exception as e:
-        print(f"Phone help question was not shown or selectable: {e}")
+        raise RuntimeError(f"Could not select AXA phone consent: {e}") from e
 
 
 async def submit_quote(page):
@@ -558,67 +562,94 @@ async def submit_quote(page):
 
 
 async def extract_quotes(page, data):
-    """Extract quote information and store results"""
-    print("\n--- Extracting Quote Information ---")
+    """Extract every AXA cover/payment price and store the results."""
+    print("\n--- Extracting AXA Quote Information ---")
 
+    quote_section = page.locator('section[id="YourQuote.Quote"]')
+    await quote_section.wait_for(state="visible", timeout=30_000)
+    amount = quote_section.locator("[totalamountinteger][totalamountdecimal]").first
+    await amount.wait_for(state="visible")
+
+    async def amount_token():
+        integer = await amount.get_attribute("totalamountinteger")
+        decimal = await amount.get_attribute("totalamountdecimal")
+        return f"{integer}.{decimal}"
+
+    async def select_radio(field_name, value):
+        option = quote_section.locator(f'input[name="{field_name}"][value="{value}"]')
+        await option.wait_for(state="attached")
+        was_selected = await option.is_checked()
+        previous_amount = await amount_token()
+
+        option_id = await option.get_attribute("id")
+        if not option_id:
+            raise RuntimeError(f"AXA {field_name} option has no associated label")
+        label = quote_section.locator(f'label[for="{option_id}"]')
+        await label.wait_for(state="visible")
+        await label.click()
+
+        await page.wait_for_function(
+            """args => [...document.querySelectorAll('input')].some(input =>
+                input.name === args.name && input.value === args.value && input.checked
+            )""",
+            arg={"name": field_name, "value": value},
+        )
+        if not was_selected:
+            await page.wait_for_function(
+                """previous => {
+                    const price = document.querySelector(
+                        'section[id="YourQuote.Quote"] '
+                        + '[totalamountinteger][totalamountdecimal]'
+                    );
+                    if (!price) return false;
+                    const current = price.getAttribute('totalamountinteger') + '.'
+                        + price.getAttribute('totalamountdecimal');
+                    return current !== previous;
+                }""",
+                arg=previous_amount,
+                timeout=20_000,
+            )
+
+    async def read_amount():
+        integer = await amount.get_attribute("totalamountinteger")
+        decimal = await amount.get_attribute("totalamountdecimal")
+        if integer is None or decimal is None:
+            raise RuntimeError("AXA quote price attributes were not available")
+        return f"€{integer}.{decimal.zfill(2)}"
+
+    quote_reference = await quote_section.locator(
+        "#CarQuotePremium\\.QuoteReferenceIdForDisplay"
+    ).inner_text()
     results = []
+    for cover_name, cover_value in AXA_MAPPINGS["cover_type"].items():
+        await select_radio("CoverType", cover_value)
+        for payment_name, payment_value in AXA_MAPPINGS["quote_payment_type"].items():
+            await select_radio("CoverDetails.NormalPaymentMethodTypeId", payment_value)
+            price = await read_amount()
+            results.append(
+                {
+                    "cover": cover_name,
+                    "payment": payment_name,
+                    "price": price,
+                }
+            )
+            print(f"{cover_name} / {payment_name}: {price}")
 
-    try:
-        # Wait for quote results to load
-        await asyncio.sleep(10)
-
-        # Look for price elements
-        price_selectors = [
-            '[data-testid="price"]',
-            ".price",
-            ".quote-price",
-            '[class*="price"]',
-            '[id*="price"]',
-        ]
-
-        price_found = False
-        for selector in price_selectors:
-            try:
-                price_element = page.locator(selector).first
-                if await price_element.count() > 0:
-                    price_text = await price_element.inner_text()
-                    if any(char.isdigit() for char in price_text):
-                        print(f"Found price: {price_text}")
-                        results.append(f"Comprehensive: {price_text}")
-                        price_found = True
-                        break
-            except:
-                continue
-
-        if not price_found:
-            print("No price found with standard selectors")
-            # Try to find any element containing Euro symbol or numbers
-            page_content = await page.content()
-            if "EUR" in page_content or "EUR" in page_content:
-                results.append(
-                    "Comprehensive: Price found on page (could not extract exact value)"
-                )
-            else:
-                results.append("Comprehensive: Price not found")
-
-    except Exception as e:
-        print(f"Error extracting quotes: {e}")
-        results.append("Comprehensive: Extraction failed")
-
-    # Store results in file
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open("insurance_quotes.txt", "a", encoding="utf-8") as f:
         f.write(f"\n{'='*50}\n")
         f.write("Company: AXA Insurance\n")
         f.write(f"Quote Generated: {timestamp}\n")
+        f.write(f"Quote Reference: {quote_reference.strip()}\n")
         f.write(f"Personal Details: {data['first_name']} {data['last_name']}\n")
         f.write(f"Vehicle: {data['car_registration']}\n")
         f.write(f"{'='*50}\n")
         for result in results:
-            f.write(f"{result}\n")
+            f.write(f"{result['cover']} ({result['payment']}): {result['price']}\n")
         f.write(f"{'='*50}\n\n")
 
     print("AXA results saved to insurance_quotes.txt")
+    return results
 
 
 async def run(playwright: Playwright, data):
