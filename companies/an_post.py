@@ -62,7 +62,9 @@ async def run(playwright: Playwright, data):
         page, "What is the registration number of the car?", data["car_registration"]
     )
     # Click the registration button
-    await page.locator('button:has-text("Find your Vehicle")').click()
+    await general_helpers.click_with_delay(
+        page.locator('button:has-text("Find your Vehicle")')
+    )
     await asyncio.sleep(2)
 
     await fill_text_field(
@@ -232,7 +234,9 @@ async def run(playwright: Playwright, data):
     await asyncio.sleep(2)
 
     # Click the submit button
-    await page.locator('button:has-text("Get an Indicative Price")').click()
+    await general_helpers.click_with_delay(
+        page.locator('button:has-text("Get an Indicative Price")')
+    )
     print("Clicked 'Get an Indicative Price' button")
 
     # Wait for results page to load
@@ -252,9 +256,11 @@ async def run(playwright: Playwright, data):
 
     # Select Third Party Fire & Theft
     try:
-        await page.locator("text=Third Party Fire And Theft").click()
+        await general_helpers.click_with_delay(
+            page.locator("text=Third Party Fire And Theft")
+        )
         await asyncio.sleep(2)
-        await page.locator("text=Recalculate").first.click()
+        await general_helpers.click_with_delay(page.locator("text=Recalculate").first)
         print("Selected 'Third Party Fire & Theft'")
         await asyncio.sleep(15)
 

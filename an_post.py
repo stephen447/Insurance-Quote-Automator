@@ -13,7 +13,9 @@ from helper_functions.an_post import calculate_no_claims_discount, format_mileag
 async def accept_cookies(page):
     """Accept cookies if the banner appears"""
     try:
-        await page.locator("#onetrust-accept-btn-handler").click(timeout=5000)
+        await general_helpers.click_with_delay(
+            page.locator("#onetrust-accept-btn-handler"), timeout=5000
+        )
         print("Clicked 'Accept All' for cookies")
     except:
         print("Cookie banner not found or already accepted")
@@ -21,19 +23,25 @@ async def accept_cookies(page):
 
 async def select_title(page, title):
     """Select title (Mr/Mrs/Ms)"""
-    await page.locator(f'div[role="button"][aria-labelledby="{title}"]').first.click()
+    await general_helpers.click_with_delay(
+        page.locator(f'div[role="button"][aria-labelledby="{title}"]').first
+    )
     print(f"Selected title: {title}")
 
 
 async def fill_first_name(page, name):
     """Fill first name field"""
-    await page.locator('input[placeholder="First Name"]').fill(name)
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="First Name"]'), name
+    )
     print(f"Filled first name with: {name}")
 
 
 async def fill_last_name(page, name):
     """Fill last name field"""
-    await page.locator('input[placeholder="Last Name"]').fill(name)
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="Last Name"]'), name
+    )
     print(f"Filled last name with: {name}")
 
 
@@ -44,11 +52,16 @@ async def fill_date_of_birth(page, date_string):
     # Get the DOB container specifically
     # dob_container = page.locator('#31f90f42-ad1f-f111-8138-005056853e6f-base')
 
-    await page.locator('input[placeholder="DD"]').first.fill(str(date_obj.day).zfill(2))
-    await page.locator('input[placeholder="MM"]').first.fill(
-        str(date_obj.month).zfill(2)
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="DD"]').first, str(date_obj.day).zfill(2)
     )
-    await page.locator('input[placeholder="YYYY"]').first.fill(str(date_obj.year))
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="MM"]').first,
+        str(date_obj.month).zfill(2),
+    )
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="YYYY"]').first, str(date_obj.year)
+    )
     print(
         f"Filled date of birth: {date_obj.day:02d}/{date_obj.month:02d}/{date_obj.year}"
     )
@@ -56,26 +69,31 @@ async def fill_date_of_birth(page, date_string):
 
 async def fill_phone_number(page, phone):
     """Fill phone number field"""
-    await page.locator('input[placeholder="Mobile Number"]').fill(
-        general_helpers.format_phone(phone)
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="Mobile Number"]'),
+        general_helpers.format_phone(phone),
     )
     print(f"Filled phone number with: {phone}")
 
 
 async def fill_email(page, email):
     """Fill email field"""
-    await page.locator('input[placeholder="Email"]').fill(email)
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="Email"]'), email
+    )
     print(f"Filled email with: {email}")
 
 
 async def fill_occupation(page, occupation):
     """Fill occupation with autocomplete"""
     occupation_input = page.locator('input[placeholder="Begin typing..."]')
-    await occupation_input.fill(occupation[:3])
+    await general_helpers.fill_with_delay(occupation_input, occupation[:3])
     await asyncio.sleep(1.5)
 
     # Wait for dropdown and select first option
-    await page.locator(".p-autocomplete-panel .p-autocomplete-item").first.click()
+    await general_helpers.click_with_delay(
+        page.locator(".p-autocomplete-panel .p-autocomplete-item").first
+    )
     print(f"Selected occupation: {occupation}")
 
 
@@ -84,35 +102,41 @@ async def fill_postcode(page, postcode):
     address_input = page.locator(
         'input[placeholder="Start typing your Eircode or address"]'
     )
-    await address_input.fill(postcode)
+    await general_helpers.fill_with_delay(address_input, postcode)
     await asyncio.sleep(2)
 
     # Wait for dropdown and select first option
     try:
-        await page.locator(".p-autocomplete-panel .p-autocomplete-item").first.click()
+        await general_helpers.click_with_delay(
+            page.locator(".p-autocomplete-panel .p-autocomplete-item").first
+        )
         print(f"Selected address for postcode: {postcode}")
     except:
-        await address_input.press("Enter")
+        await general_helpers.press_with_delay(address_input, "Enter")
         print(f"Pressed Enter for postcode: {postcode}")
 
 
 async def fill_car_registration(page, registration):
     """Fill car registration and search for vehicle"""
-    await page.locator('input[placeholder="Car Registration Number"]').fill(
-        registration
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="Car Registration Number"]'), registration
     )
     print(f"Filled car registration with: {registration}")
 
     # Click "Find your Vehicle" button
     await asyncio.sleep(1)
-    await page.locator('button:has-text("Find your Vehicle")').click()
+    await general_helpers.click_with_delay(
+        page.locator('button:has-text("Find your Vehicle")')
+    )
     print("Clicked 'Find your Vehicle' button")
     await asyncio.sleep(3)  # Wait for vehicle lookup
 
 
 async def fill_car_value(page, value):
     """Fill car value field"""
-    await page.locator('input[placeholder="Car Value"]').fill(str(value))
+    await general_helpers.fill_with_delay(
+        page.locator('input[placeholder="Car Value"]'), str(value)
+    )
     print(f"Filled car value with: €{value}")
 
 
@@ -122,9 +146,9 @@ async def select_tile_option(page, question_text, option_label):
     container = page.locator(
         f'div.equote-question-base:has(span[data-cy="title"]:has-text("{question_text}"))'
     )
-    await container.locator(
-        f'div[role="button"][aria-labelledby="{option_label}"]'
-    ).click()
+    await general_helpers.click_with_delay(
+        container.locator(f'div[role="button"][aria-labelledby="{option_label}"]')
+    )
     print(f"Selected '{option_label}' for '{question_text}'")
 
 
@@ -133,7 +157,9 @@ async def select_boolean_option(page, question_text, value):
     container = page.locator(
         f'div.equote-question-base:has(span[data-cy="title"]:has-text("{question_text}"))'
     )
-    await container.locator(f'div[role="button"][aria-labelledby="{value}"]').click()
+    await general_helpers.click_with_delay(
+        container.locator(f'div[role="button"][aria-labelledby="{value}"]')
+    )
     print(f"Selected '{value}' for '{question_text}'")
 
 
@@ -144,13 +170,15 @@ async def select_dropdown_option(page, question_text, option_text):
     )
 
     # Click to open dropdown
-    await container.locator("p-dropdown").click()
+    await general_helpers.click_with_delay(container.locator("p-dropdown"))
     await asyncio.sleep(0.5)
 
     # Select the option
-    await page.locator(
-        f'.p-dropdown-panel .p-dropdown-item:has-text("{option_text}")'
-    ).first.click()
+    await general_helpers.click_with_delay(
+        page.locator(
+            f'.p-dropdown-panel .p-dropdown-item:has-text("{option_text}")'
+        ).first
+    )
     print(f"Selected '{option_text}' for '{question_text}'")
 
 
@@ -162,11 +190,16 @@ async def fill_date_field(page, question_text, date_string):
         f'div.equote-question-base:has(span[data-cy="title"]:has-text("{question_text}"))'
     )
 
-    await container.locator('input[placeholder="DD"]').fill(str(date_obj.day).zfill(2))
-    await container.locator('input[placeholder="MM"]').fill(
-        str(date_obj.month).zfill(2)
+    await general_helpers.fill_with_delay(
+        container.locator('input[placeholder="DD"]'), str(date_obj.day).zfill(2)
     )
-    await container.locator('input[placeholder="YYYY"]').fill(str(date_obj.year))
+    await general_helpers.fill_with_delay(
+        container.locator('input[placeholder="MM"]'),
+        str(date_obj.month).zfill(2),
+    )
+    await general_helpers.fill_with_delay(
+        container.locator('input[placeholder="YYYY"]'), str(date_obj.year)
+    )
     print(
         f"Filled date for '{question_text}': {date_obj.day:02d}/{date_obj.month:02d}/{date_obj.year}"
     )
@@ -177,7 +210,7 @@ async def click_checkbox(page, checkbox_text_contains):
     container = page.locator(
         f'div.equote-question-base:has(span[data-cy="title"]:has-text("{checkbox_text_contains}"))'
     )
-    await container.locator("p-checkbox").click()
+    await general_helpers.click_with_delay(container.locator("p-checkbox"))
     print(f"Clicked checkbox containing: '{checkbox_text_contains}'")
 
 
@@ -374,7 +407,9 @@ async def run(playwright: Playwright, data):
     await asyncio.sleep(2)
 
     # Uncomment below to click the submit button
-    await page.locator('button:has-text("Get an Indicative Price")').click()
+    await general_helpers.click_with_delay(
+        page.locator('button:has-text("Get an Indicative Price")')
+    )
     print("Clicked 'Get an Indicative Price' button")
 
     # Keep browser open to see results

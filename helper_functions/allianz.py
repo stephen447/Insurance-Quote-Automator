@@ -2,7 +2,7 @@
 
 import re
 
-from helper_functions.general import format_phone
+from helper_functions.general import click_with_delay, format_phone
 
 
 async def accept_cookies(page):
@@ -16,7 +16,7 @@ async def accept_cookies(page):
 
     for selector in selectors:
         try:
-            await page.locator(selector).first.click(timeout=2_000)
+            await click_with_delay(page.locator(selector).first, timeout=2_000)
             return True
         except Exception:
             continue

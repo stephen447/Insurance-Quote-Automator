@@ -17,6 +17,11 @@ from helper_functions.allianz import (
     mileage_option_matches,
     purchase_year,
 )
+from helper_functions.general import (
+    click_with_delay,
+    fill_with_delay,
+    set_checked_with_delay,
+)
 
 ALLIANZ_QUOTE_URL = "https://quote.allianz.ie/motorb2cui/"
 
@@ -32,7 +37,7 @@ async def open_quote_form(page):
     except Exception:
         quote_link = page.get_by_role("link", name="Get car quote", exact=False).first
         await quote_link.wait_for(state="visible")
-        await quote_link.click()
+        await click_with_delay(quote_link)
         await page.wait_for_load_state("domcontentloaded")
         await first_name.wait_for(state="visible")
 
@@ -56,29 +61,34 @@ async def fill_vehicle_details(page, data):
             f'nx-radio-toggle-button[trackid="{track_id}"][trackvalue="{value}"]'
         )
         await toggle.wait_for(state="visible")
-        await toggle.locator("label").click()
+        await click_with_delay(toggle.locator("label"))
 
     registration = page.locator('input[formcontrolname="carRegistrationNumber"]')
     await registration.wait_for(state="visible")
     registration_value = format_registration(data["car_registration"])
     if not registration_value:
         raise ValueError("Allianz requires an alphanumeric car registration")
-    await registration.fill(registration_value)
+    await fill_with_delay(registration, registration_value)
     registration_search = page.locator("azire-car-registration nx-page-search")
-    await registration_search.get_by_role("button", name="Find", exact=True).click()
+    await click_with_delay(
+        registration_search.get_by_role("button", name="Find", exact=True)
+    )
     await page.locator("azire-vrn-selected-car nx-message").wait_for(
         state="visible", timeout=15_000
     )
 
-    await page.locator('input[formcontrolname="value"]').fill(str(data["car_value"]))
-    await page.locator('input[formcontrolname="yearVehiclePurchased"]').fill(
-        purchase_year(data["car_purchase_date"])
+    await fill_with_delay(
+        page.locator('input[formcontrolname="value"]'), str(data["car_value"])
+    )
+    await fill_with_delay(
+        page.locator('input[formcontrolname="yearVehiclePurchased"]'),
+        purchase_year(data["car_purchase_date"]),
     )
 
     mileage_dropdown = page.locator(
         'azire-generic-dropdown[nameofcontrol="annualMileage"] nx-dropdown'
     )
-    await mileage_dropdown.click()
+    await click_with_delay(mileage_dropdown)
     mileage_options = page.locator(
         "[role='listbox'] [role='option']:visible, nx-dropdown-item:visible"
     )
@@ -97,7 +107,7 @@ async def fill_vehicle_details(page, data):
         raise ValueError(
             f"No Allianz mileage option contains {data['estimated_mileage']}: {labels}"
         )
-    await mileage_options.nth(matching_index).click()
+    await click_with_delay(mileage_options.nth(matching_index))
 
     business_use = data.get("business_use", False)
     await select_toggle("businessUse", str(business_use).lower())
@@ -137,7 +147,7 @@ async def fill_vehicle_details(page, data):
             checkbox = page.locator(
                 'input[name="accessToAnotherCarValue"]' f'[value="{form_value}"]'
             )
-            await checkbox.set_checked(True, force=True)
+            await set_checked_with_delay(checkbox, True, force=True)
 
     print("Completed Allianz Car Details fields")
 
@@ -165,12 +175,12 @@ async def fill_personal_details(page, data):
             f'nx-radio-toggle-button[trackid="{track_id}"]' f'[{attribute}="{value}"]'
         )
         await toggle.wait_for(state="visible")
-        await toggle.locator("label").click()
+        await click_with_delay(toggle.locator("label"))
 
     async def select_autocomplete(input_selector, query):
         search_input = page.locator(input_selector)
         await search_input.wait_for(state="visible")
-        await search_input.fill(str(query))
+        await fill_with_delay(search_input, str(query))
 
         option = page.locator(
             "nx-autocomplete [role='option']:visible, "
@@ -178,13 +188,15 @@ async def fill_personal_details(page, data):
             "[role='listbox'] [role='option']:visible"
         ).first
         await option.wait_for(state="visible", timeout=10_000)
-        await option.click()
+        await click_with_delay(option)
 
-    await page.locator("#firstName").fill(data["first_name"])
-    await page.locator("#surname").fill(data["last_name"])
-    await page.locator("#mobileNumber").fill(format_mobile(data["phone"]))
-    await page.locator("#dateOfBirth").fill(format_date(data["date_of_birth"]))
-    await page.locator("#email").fill(data["email"])
+    await fill_with_delay(page.locator("#firstName"), data["first_name"])
+    await fill_with_delay(page.locator("#surname"), data["last_name"])
+    await fill_with_delay(page.locator("#mobileNumber"), format_mobile(data["phone"]))
+    await fill_with_delay(
+        page.locator("#dateOfBirth"), format_date(data["date_of_birth"])
+    )
+    await fill_with_delay(page.locator("#email"), data["email"])
 
     gender = gender_from_data(data)
     try:
@@ -197,7 +209,9 @@ async def fill_personal_details(page, data):
     await select_toggle("Gender", "data-gender", gender_label)
 
     marketing = page.locator("#nx-checkbox-subMarketing")
-    await marketing.set_checked(data.get("marketing_consent", False), force=True)
+    await set_checked_with_delay(
+        marketing, data.get("marketing_consent", False), force=True
+    )
 
     employment_status = data.get("employment_status", "employed")
     try:
@@ -238,12 +252,13 @@ async def fill_personal_details(page, data):
         "trackvalue",
         str(data.get("existing_allianz_policy", False)).lower(),
     )
-    await page.locator('input[formcontrolname="coverDate"]').fill(
-        format_date(data["policy_start_date"])
+    await fill_with_delay(
+        page.locator('input[formcontrolname="coverDate"]'),
+        format_date(data["policy_start_date"]),
     )
 
     terms = page.locator("azire-terms-conditions input[type='checkbox']")
-    await terms.set_checked(data.get("accept_terms", False), force=True)
+    await set_checked_with_delay(terms, data.get("accept_terms", False), force=True)
     print("Completed Allianz Your Details fields")
 
 
@@ -263,14 +278,14 @@ async def fill_driving_history(page, data):
             f'nx-radio-toggle-button[trackid="{track_id}"][trackvalue="{value}"]'
         )
         await toggle.wait_for(state="visible")
-        await toggle.locator("label").click()
+        await click_with_delay(toggle.locator("label"))
 
     async def select_dropdown(control_name, desired_value):
         dropdown = page.locator(
             f'azire-generic-dropdown[nameofcontrol="{control_name}"] nx-dropdown'
         )
         await dropdown.wait_for(state="visible")
-        await dropdown.click()
+        await click_with_delay(dropdown)
         options = page.locator(
             "[role='listbox'] [role='option']:visible, nx-dropdown-item:visible"
         )
@@ -289,7 +304,7 @@ async def fill_driving_history(page, data):
             raise ValueError(
                 f"No Allianz {control_name} option matches {desired_value}: {labels}"
             )
-        await options.nth(matching_index).click()
+        await click_with_delay(options.nth(matching_index))
 
     experience = data.get("latest_driving_experience", "policy_own_name_ireland")
     try:
@@ -357,8 +372,9 @@ async def fill_driving_history(page, data):
             raise ValueError(
                 "Allianz requires 'driving_test_year' when the test was passed"
             )
-        await page.locator('input[formcontrolname="driversTestPassedOn"]').fill(
-            str(test_year)
+        await fill_with_delay(
+            page.locator('input[formcontrolname="driversTestPassedOn"]'),
+            str(test_year),
         )
 
     penalty_points = int(data.get("penalty_points", 0))
@@ -367,7 +383,7 @@ async def fill_driving_history(page, data):
     penalty_stepper = page.locator(
         'azire-simple-stepper[nameofcontrol="totalPenaltyPoints"] input[type="number"]'
     )
-    await penalty_stepper.fill(str(penalty_points))
+    await fill_with_delay(penalty_stepper, str(penalty_points))
 
     await select_toggle(
         "hasAdditionalDrivers",
@@ -386,7 +402,7 @@ async def submit_quote(page):
     """Submit the first page and wait for Allianz's Car Details page."""
     button = page.locator("#clientDetailsSubmit")
     await button.wait_for(state="visible")
-    await button.click()
+    await click_with_delay(button)
     await button.wait_for(state="hidden", timeout=15_000)
     print("Proceeded to Allianz Car Details")
 
@@ -395,7 +411,7 @@ async def submit_vehicle_details(page):
     """Submit the second page and wait for Allianz's Driver Details page."""
     button = page.locator("#clientDetailsSubmit")
     await button.wait_for(state="visible")
-    await button.click()
+    await click_with_delay(button)
     await button.wait_for(state="hidden", timeout=15_000)
     print("Proceeded to Allianz Driver Details")
 
@@ -404,7 +420,7 @@ async def submit_driving_history(page):
     """Submit Driver History and wait for Allianz's Cover Selection page."""
     button = page.locator("#clientDetailsSubmit")
     await button.wait_for(state="visible")
-    await button.click()
+    await click_with_delay(button)
     await button.wait_for(state="hidden", timeout=15_000)
     print("Proceeded to Allianz Cover Selection")
 
@@ -423,7 +439,7 @@ async def extract_quote(page, data):
         schedule_input = toggle.locator('input[type="radio"]')
         was_selected = await schedule_input.is_checked()
         previous_prices = await price_group.inner_text()
-        await toggle.locator("label").click()
+        await click_with_delay(toggle.locator("label"))
         await page.wait_for_function(
             """schedule => [...document.querySelectorAll(
                 'nx-radio-toggle-button[trackid="paymentSchedule"]'

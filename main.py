@@ -22,7 +22,7 @@ PROVIDERS = {
 #   ("allianz",)        - Allianz only (automation in progress)
 #   ("axa",)            - AXA only
 #   ("an-post", "axa") - multiple companies
-SELECTED_PROVIDERS = ("axa",)
+SELECTED_PROVIDERS = ("an-post",)
 
 # Personal information dictionary
 PERSONAL_INFO = {

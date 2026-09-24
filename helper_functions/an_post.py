@@ -3,6 +3,8 @@
 import asyncio
 from datetime import datetime
 
+from helper_functions.general import click_with_delay, fill_with_delay
+
 
 def format_mileage(mileage):
     """Map annual mileage to the range expected by An Post."""
@@ -70,7 +72,7 @@ async def accept_cookies(page):
         cookie_button = page.locator("#onetrust-accept-btn-handler")
 
         if await cookie_button.is_visible():
-            await cookie_button.click()
+            await click_with_delay(cookie_button)
             print("Info: Clicked 'Accept All' for cookies")
 
     except Exception as e:
@@ -87,7 +89,7 @@ async def click_checkbox(page, checkbox_text_contains):
         checkbox = container.locator("p-checkbox")
         await checkbox.wait_for(state="visible")
 
-        await checkbox.click()
+        await click_with_delay(checkbox)
         print(f"Clicked checkbox for '{checkbox_text_contains}'")
 
     except Exception as e:
@@ -97,7 +99,7 @@ async def click_checkbox(page, checkbox_text_contains):
 
 async def enter_and_select_first_option_from_dropdown(page, input_selector, value):
     """Enter value and select first option from autocomplete dropdown"""
-    await page.locator(input_selector).fill(value)
+    await fill_with_delay(page.locator(input_selector), value)
     await asyncio.sleep(1)
     option = page.locator(".p-autocomplete-panel .p-autocomplete-item")
 
@@ -110,7 +112,7 @@ async def enter_and_select_first_option_from_dropdown(page, input_selector, valu
         if option_count > 1:
             print(f"Warning: Multiple options found for '{value}'")
 
-        await option.first.click()
+        await click_with_delay(option.first)
         print(f"Info: Selected first option for '{value}'")
 
     except Exception as e:
@@ -122,7 +124,7 @@ async def enter_and_select_first_option_from_dropdown(page, input_selector, valu
 
 async def enter_and_select_from_dropdown(page, input_selector, value):
     """Enter value and select matching option from autocomplete dropdown"""
-    await page.locator(input_selector).fill(value)
+    await fill_with_delay(page.locator(input_selector), value)
 
     option = page.locator(
         f'.p-autocomplete-panel .p-autocomplete-item:has-text("{value}")'
@@ -137,7 +139,7 @@ async def enter_and_select_from_dropdown(page, input_selector, value):
         if option_count > 1:
             print(f"Warning: Multiple options found for '{value}'")
 
-        await option.first.click()
+        await click_with_delay(option.first)
         print(f"Info: Selected '{value}' from dropdown")
 
     except Exception as e:
@@ -156,13 +158,16 @@ async def fill_date_field(page, question_text, date_string):
             f'div.equote-question-base:has(span[data-cy="title"]:has-text("{question_text}"))'
         )
 
-        await container.locator('input[placeholder="DD"]').fill(
-            str(date_obj.day).zfill(2)
+        await fill_with_delay(
+            container.locator('input[placeholder="DD"]'), str(date_obj.day).zfill(2)
         )
-        await container.locator('input[placeholder="MM"]').fill(
-            str(date_obj.month).zfill(2)
+        await fill_with_delay(
+            container.locator('input[placeholder="MM"]'),
+            str(date_obj.month).zfill(2),
         )
-        await container.locator('input[placeholder="YYYY"]').fill(str(date_obj.year))
+        await fill_with_delay(
+            container.locator('input[placeholder="YYYY"]'), str(date_obj.year)
+        )
 
         print(
             f"Filled date for '{question_text}': {date_obj.day:02d}/{date_obj.month:02d}/{date_obj.year}"
@@ -192,7 +197,7 @@ async def fill_text_field(page, question_text, value):
                 f"Info: Multiple text fields found for '{question_text}', using first one"
             )
 
-        await field.first.fill(value)
+        await fill_with_delay(field.first, value)
         print(f"Info: Filled text field for '{question_text}' with: {value}")
 
     except Exception as e:
@@ -219,7 +224,7 @@ async def select_boolean_option(page, question_text, value):
         if checkbox_count > 1:
             print(f"Warning: Multiple checkbox options found for '{value}'")
 
-        await checkbox.first.click()
+        await click_with_delay(checkbox.first)
         print(f"Info: Selected '{value}' for '{question_text}'")
 
     except Exception as e:
@@ -233,12 +238,12 @@ async def select_dropdown_option(page, question_text, option_text):
             f'div.equote-question-base:has(span[data-cy="title"]:has-text("{question_text}"))'
         )
 
-        await container.locator("p-dropdown").click()
+        await click_with_delay(container.locator("p-dropdown"))
 
         option = page.locator(f'.p-dropdown-item:has-text("{option_text}")')
 
         await option.first.wait_for(state="visible")
-        await option.first.click()
+        await click_with_delay(option.first)
 
         print(f"Selected '{option_text}' for '{question_text}'")
 
@@ -270,7 +275,7 @@ async def select_tile_option(page, question_text, option_label):
         if tile_count > 1:
             print(f"Warning: Multiple tile options found for '{option_label}'")
 
-        await tile.first.click()
+        await click_with_delay(tile.first)
         print(f"Info: Selected '{option_label}' for '{question_text}'")
 
     except Exception as e:

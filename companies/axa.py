@@ -7,6 +7,11 @@ from playwright.async_api import Playwright, async_playwright
 
 import helper_functions.axa as axa_helpers
 from data_maps.axa import AXA_MAPPINGS
+from helper_functions.general import (
+    click_with_delay,
+    fill_with_delay,
+    select_option_with_delay,
+)
 
 AXA_QUOTE_URL = "https://www.axa.ie/car-insurance/quote/your-details"
 
@@ -52,7 +57,7 @@ async def accept_cookies(page):
 
         for selector in cookie_selectors:
             try:
-                await page.locator(selector).first.click(timeout=3000)
+                await click_with_delay(page.locator(selector).first, timeout=3000)
                 print("Clicked cookie acceptance button")
                 return
             except:
@@ -73,11 +78,13 @@ async def fill_vehicle_details(page, data):
         registration_input = vehicle_section.locator(
             'input[name="VehicleDetails.VehicleRegistrationNumber"]'
         )
-        await registration_input.fill(data["car_registration"])
+        await fill_with_delay(registration_input, data["car_registration"])
         print(f"Filled registration number: {data['car_registration']}")
 
         # Click Find car button
-        await vehicle_section.get_by_role("button", name="Find car", exact=True).click()
+        await click_with_delay(
+            vehicle_section.get_by_role("button", name="Find car", exact=True)
+        )
         print("Clicked 'Find car' button")
 
         # AXA adds this confirmation field after a successful registration lookup.
@@ -85,7 +92,7 @@ async def fill_vehicle_details(page, data):
             'label[for="VehicleDetails.ConfirmCarSearchBtn1"]'
         )
         await confirm_car_yes.wait_for(state="visible")
-        await confirm_car_yes.click()
+        await click_with_delay(confirm_car_yes)
         print("Confirmed the registration lookup returned the correct car")
     except Exception as e:
         print(f"Error filling vehicle registration: {e}")
@@ -99,7 +106,7 @@ async def fill_vehicle_details(page, data):
             f'label[for="VehicleDetails.IsVehicleForBusinessUse{option_id}"]'
         )
         await business_use_label.wait_for(state="visible")
-        await business_use_label.click()
+        await click_with_delay(business_use_label)
         print(f"Selected business use: {business_use_value}")
     except Exception as e:
         print(f"Error selecting business use: {e}")
@@ -116,7 +123,7 @@ async def fill_vehicle_details(page, data):
             cover_option_id = await cover_input.get_attribute("id")
             cover_label = vehicle_section.locator(f'label[for="{cover_option_id}"]')
             await cover_label.wait_for(state="visible")
-            await cover_label.click()
+            await click_with_delay(cover_label)
             print(f"Selected business use cover: {cover_type}")
         except Exception as e:
             print(f"Error selecting business use cover: {e}")
@@ -130,7 +137,7 @@ async def fill_vehicle_details(page, data):
                 f'label[for="VehicleDetails.IsVehicleForCommutingUse{option_id}"]'
             )
             await commuting_use_label.wait_for(state="visible")
-            await commuting_use_label.click()
+            await click_with_delay(commuting_use_label)
             print(f"Selected commuting use: {commuting_use}")
         except Exception as e:
             print(f"Error selecting commuting use: {e}")
@@ -141,9 +148,12 @@ async def fill_vehicle_details(page, data):
             data.get("estimated_mileage", 10000)
         )
         distance_value = AXA_MAPPINGS["annual_distance"][distance_category]
-        await vehicle_section.locator(
-            'select[name="VehicleDetails.AnnualDistanceDrivenTypeId"]'
-        ).select_option(value=distance_value)
+        await select_option_with_delay(
+            vehicle_section.locator(
+                'select[name="VehicleDetails.AnnualDistanceDrivenTypeId"]'
+            ),
+            value=distance_value,
+        )
         print(f"Selected annual distance: {distance_category}")
     except Exception as e:
         print(f"Error selecting annual distance: {e}")
@@ -163,7 +173,7 @@ async def fill_personal_details(page, data):
         option_id = await radio_input.get_attribute("id")
         option_label = personal_section.locator(f'label[for="{option_id}"]')
         await option_label.wait_for(state="visible")
-        await option_label.click()
+        await click_with_delay(option_label)
 
     # Title
     try:
@@ -175,8 +185,9 @@ async def fill_personal_details(page, data):
 
     # First name
     try:
-        await personal_section.locator('input[name="ProposerDetails.FirstName"]').fill(
-            data["first_name"]
+        await fill_with_delay(
+            personal_section.locator('input[name="ProposerDetails.FirstName"]'),
+            data["first_name"],
         )
         print(f"Filled first name: {data['first_name']}")
     except Exception as e:
@@ -184,8 +195,9 @@ async def fill_personal_details(page, data):
 
     # Last name
     try:
-        await personal_section.locator('input[name="ProposerDetails.LastName"]').fill(
-            data["last_name"]
+        await fill_with_delay(
+            personal_section.locator('input[name="ProposerDetails.LastName"]'),
+            data["last_name"],
         )
         print(f"Filled last name: {data['last_name']}")
     except Exception as e:
@@ -194,24 +206,28 @@ async def fill_personal_details(page, data):
     # Date of birth
     try:
         date_components = axa_helpers.split_date_components(data["date_of_birth"])
-        await personal_section.locator(
-            'input[name="ProposerDetails.DateOfBirth.Day"]'
-        ).fill(date_components["day"])
-        await personal_section.locator(
-            'input[name="ProposerDetails.DateOfBirth.Month"]'
-        ).fill(date_components["month"])
-        await personal_section.locator(
-            'input[name="ProposerDetails.DateOfBirth.Year"]'
-        ).fill(date_components["year"])
+        await fill_with_delay(
+            personal_section.locator('input[name="ProposerDetails.DateOfBirth.Day"]'),
+            date_components["day"],
+        )
+        await fill_with_delay(
+            personal_section.locator('input[name="ProposerDetails.DateOfBirth.Month"]'),
+            date_components["month"],
+        )
+        await fill_with_delay(
+            personal_section.locator('input[name="ProposerDetails.DateOfBirth.Year"]'),
+            date_components["year"],
+        )
         print(f"Filled date of birth: {data['date_of_birth']}")
     except Exception as e:
         print(f"Error filling date of birth: {e}")
 
     # Email
     try:
-        await personal_section.locator(
-            'input[name="ProposerDetails.EmailAddress"]'
-        ).fill(data["email"])
+        await fill_with_delay(
+            personal_section.locator('input[name="ProposerDetails.EmailAddress"]'),
+            data["email"],
+        )
         print(f"Filled email: {data['email']}")
     except Exception as e:
         print(f"Error filling email: {e}")
@@ -219,8 +235,8 @@ async def fill_personal_details(page, data):
     # Phone number
     try:
         formatted_phone = axa_helpers.format_phone_number(data["phone"])
-        await personal_section.locator('input[name="phone-number"]').fill(
-            formatted_phone
+        await fill_with_delay(
+            personal_section.locator('input[name="phone-number"]'), formatted_phone
         )
         print(f"Filled phone number: {formatted_phone}")
     except Exception as e:
@@ -246,14 +262,14 @@ async def fill_personal_details(page, data):
             'input[placeholder*="occupation" i]'
         ).first
         await occupation_input.wait_for(state="visible", timeout=3_000)
-        await occupation_input.fill(data["occupation"])
+        await fill_with_delay(occupation_input, data["occupation"])
         print(f"Filled occupation search: {data['occupation']}")
 
         occupation_suggestion = personal_section.locator(
             '.react-autosuggest__suggestion, [role="option"]'
         ).first
         await occupation_suggestion.wait_for(state="visible", timeout=5_000)
-        await occupation_suggestion.click()
+        await click_with_delay(occupation_suggestion)
         print("Selected occupation from suggestions")
     except Exception as e:
         print(f"Occupation field was not shown or selectable: {e}")
@@ -274,7 +290,7 @@ async def fill_personal_details(page, data):
             option_id = await part_time_input.get_attribute("id")
             option_label = personal_section.locator(f'label[for="{option_id}"]')
             await option_label.wait_for(state="visible", timeout=3_000)
-            await option_label.click()
+            await click_with_delay(option_label)
             print(f"Selected part-time occupation: {part_time_occupation}")
     except Exception as e:
         print(f"Error selecting part-time occupation: {e}")
@@ -285,9 +301,12 @@ async def fill_personal_details(page, data):
         address_query = address.get("postal_code") or (
             f"{address['street']}, {address['city']}, {address['county']}"
         )
-        await personal_section.locator(
-            'input[name="ProposerDetails.AddressDisplayFormatted"]'
-        ).fill(address_query)
+        await fill_with_delay(
+            personal_section.locator(
+                'input[name="ProposerDetails.AddressDisplayFormatted"]'
+            ),
+            address_query,
+        )
         print(f"Filled address search: {address_query}")
 
         try:
@@ -295,7 +314,7 @@ async def fill_personal_details(page, data):
                 '.react-autosuggest__suggestion, [role="option"]'
             ).first
             await address_suggestion.wait_for(state="visible", timeout=5_000)
-            await address_suggestion.click()
+            await click_with_delay(address_suggestion)
             print("Selected address from suggestions")
         except Exception as e:
             print(f"No address suggestion could be selected: {e}")
@@ -326,7 +345,7 @@ async def fill_driving_history(page, data):
         option_id = await radio_input.get_attribute("id")
         option_label = driving_section.locator(f'label[for="{option_id}"]')
         await option_label.wait_for(state="visible")
-        await option_label.click()
+        await click_with_delay(option_label)
 
     # Driving licence type
     try:
@@ -343,9 +362,12 @@ async def fill_driving_history(page, data):
     try:
         years_category = axa_helpers.map_years_licence_held(data["licence_duration"])
         years_value = AXA_MAPPINGS["years_licence_held"][years_category]
-        await driving_section.locator(
-            'select[name="DrivingHistory.YearsLicenceHeldTypeId"]'
-        ).select_option(value=years_value)
+        await select_option_with_delay(
+            driving_section.locator(
+                'select[name="DrivingHistory.YearsLicenceHeldTypeId"]'
+            ),
+            value=years_value,
+        )
         print(f"Selected years licence held: {years_category}")
     except Exception as e:
         print(f"Error selecting years licence held: {e}")
@@ -377,8 +399,9 @@ async def fill_driving_history(page, data):
     async def select_no_claims_years(field_name, years):
         years = max(0, min(int(years), 10))
         option_value = AXA_MAPPINGS["no_claims_discount_years"][years]
-        await driving_section.locator(f'select[name="{field_name}"]').select_option(
-            value=option_value
+        await select_option_with_delay(
+            driving_section.locator(f'select[name="{field_name}"]'),
+            value=option_value,
         )
         return "10+" if years == 10 else years
 
@@ -426,7 +449,7 @@ async def fill_driving_history(page, data):
                 'label[for="DrivingHistory.IsClaimsFreeTotalConfirmed"]'
             )
             await claims_total_label.wait_for(state="visible", timeout=3_000)
-            await claims_total_label.click()
+            await click_with_delay(claims_total_label)
             print("Confirmed the combined claims-free driving experience")
         except Exception:
             print("Combined claims-free confirmation was not shown; skipping it")
@@ -445,7 +468,7 @@ async def fill_claims_history(page, data):
             f'input[name="HasPreviousClaims"][value="{claims_value}"]'
         )
         await claims_input.wait_for(state="attached")
-        await claims_input.evaluate("element => element.click()")
+        await click_with_delay(claims_input, javascript=True)
         if not await claims_input.is_checked():
             raise RuntimeError("AXA did not register the claims selection")
         print(f"Selected previous claims: {has_previous_claims}")
@@ -467,7 +490,7 @@ async def fill_discounts(page, data):
             f'[value="{discount_value}"]'
         )
         await discount_input.wait_for(state="attached")
-        await discount_input.evaluate("element => element.click()")
+        await click_with_delay(discount_input, javascript=True)
         if not await discount_input.is_checked():
             raise RuntimeError("AXA did not register the multi-policy selection")
         print(f"Selected multi-policy discount: {has_multi_policy_discount}")
@@ -485,15 +508,16 @@ async def fill_cover_details(page, data):
         checkbox = cover_section.locator(f'input[name="{field_name}"]')
         await checkbox.wait_for(state="attached")
         if await checkbox.is_checked() != desired_state:
-            await checkbox.evaluate("element => element.click()")
+            await click_with_delay(checkbox, javascript=True)
         if await checkbox.is_checked() != desired_state:
             raise RuntimeError(f"AXA did not update {field_name}")
 
     # Cover start date
     try:
         formatted_date = axa_helpers.format_date_for_axa(data["policy_start_date"])
-        await cover_section.locator('input[name="CoverDetails.CoverStartDate"]').fill(
-            formatted_date
+        await fill_with_delay(
+            cover_section.locator('input[name="CoverDetails.CoverStartDate"]'),
+            formatted_date,
         )
         print(f"Filled cover start date: {formatted_date}")
     except Exception as e:
@@ -523,7 +547,7 @@ async def fill_cover_details(page, data):
             'input[name="CoverDetails.IsDataConsentGiven"]' f'[value="{consent_value}"]'
         )
         await consent_input.wait_for(state="attached")
-        await consent_input.evaluate("element => element.click()")
+        await click_with_delay(consent_input, javascript=True)
         if not await consent_input.is_checked():
             raise RuntimeError("AXA did not register the data-consent selection")
         print(f"Selected data consent: {consent_value}")
@@ -544,7 +568,7 @@ async def fill_cover_details(page, data):
             raise RuntimeError("AXA phone-consent input has no associated label")
         phone_consent_label = page.locator(f'label[for="{phone_consent_id}"]')
         await phone_consent_label.wait_for(state="visible", timeout=10_000)
-        await phone_consent_label.click()
+        await click_with_delay(phone_consent_label)
         if not await phone_consent_input.is_checked():
             raise RuntimeError("AXA did not register the phone-help selection")
         print(f"Selected phone help consent: {phone_consent}")
@@ -557,7 +581,7 @@ async def submit_quote(page):
     cover_section = page.locator('section[id="YourCover"]')
     get_quote_button = cover_section.locator('button[name="getquote-btn"]')
     await get_quote_button.wait_for(state="visible")
-    await get_quote_button.click()
+    await click_with_delay(get_quote_button)
     print("Clicked 'Get a Quote'")
 
 
@@ -586,7 +610,7 @@ async def extract_quotes(page, data):
             raise RuntimeError(f"AXA {field_name} option has no associated label")
         label = quote_section.locator(f'label[for="{option_id}"]')
         await label.wait_for(state="visible")
-        await label.click()
+        await click_with_delay(label)
 
         await page.wait_for_function(
             """args => [...document.querySelectorAll('input')].some(input =>
