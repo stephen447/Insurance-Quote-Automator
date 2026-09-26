@@ -15,6 +15,7 @@ A Python automation tool that fills out insurance quote forms on Irish insurance
 - **An Post Insurance** - Fully automated quote generation
 - **AXA Insurance** - Automated quote generation
 - **Allianz Insurance** - Automates the main journey and records monthly/annual prices
+- **AA Insurance** - Automates the supported main-driver happy path and records quote cards
 
 ## Requirements
 
@@ -89,6 +90,9 @@ pre-commit run --all-files
    # Allianz only (automates through Driver History to Cover Selection)
    SELECTED_PROVIDERS = ("allianz",)
 
+   # AA only (automates the supported main-driver happy path)
+   SELECTED_PROVIDERS = ("aa",)
+
    # Both companies
    SELECTED_PROVIDERS = ("an-post", "axa")
    ```
@@ -112,11 +116,11 @@ The `PERSONAL_INFO` dictionary supports the following fields:
 **Personal Details:**
 
 - `title`, `gender`, `first_name`, `last_name`, `email`, `phone`, `date_of_birth`
-- `employment_status`, `occupation`
+- `employment_status`, `industry`, `occupation`
 
 **Vehicle Information:**
 
-- `car_registration`, `car_value`, `car_purchase_date`, `estimated_mileage`
+- `car_registration`, `car_value`, `car_seats`, `car_purchase_date`, `estimated_mileage`
 - `right_hand_drive`, `registered_in_ireland`, `is_imported`, `registered_owner`, `car_usage`
 - `business_use`, `commuting`, `business_mileage`, `soliciting_orders`
 - `regular_use_other_vehicle`, `other_vehicle_types`
@@ -144,11 +148,14 @@ The `PERSONAL_INFO` dictionary supports the following fields:
 insurance-quote-automator/
 |-- main.py                 # Main entry point with personal info configuration
 |-- companies/
+|   |-- aa.py              # AA Insurance automation logic
 |   |-- an_post.py         # An Post Insurance automation logic
 |-- helper_functions/
+|   |-- aa.py              # AA-specific helper functions
 |   |-- general.py         # General utility functions
 |   |-- an_post.py         # An Post-specific helper functions
 |-- data_maps/
+|   |-- aa.py              # Form field mappings for AA
 |   |-- an_post.py         # Form field mappings for An Post
 |-- README.md
 |-- .gitignore

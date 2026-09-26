@@ -6,11 +6,13 @@ from datetime import datetime
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
+import companies.aa as aa
 import companies.allianz as allianz
 import companies.an_post as an_post
 import companies.axa as axa
 
 PROVIDERS = {
+    "aa": ("AA Insurance", aa.run),
     "an-post": ("An Post Insurance", an_post.run),
     "allianz": ("Allianz Insurance", allianz.run),
     "axa": ("AXA Insurance", axa.run),
@@ -18,11 +20,12 @@ PROVIDERS = {
 
 # Select the companies to run here.
 # Examples:
+#   ("aa",)             - AA only (opening name step)
 #   ("an-post",)        - An Post only
 #   ("allianz",)        - Allianz only (automation in progress)
 #   ("axa",)            - AXA only
 #   ("an-post", "axa") - multiple companies
-SELECTED_PROVIDERS = ("axa",)
+SELECTED_PROVIDERS = ("aa",)
 
 # Personal information dictionary
 PERSONAL_INFO = {
@@ -34,9 +37,11 @@ PERSONAL_INFO = {
     "date_of_birth": "11-01-1999",
     "gender": "male",
     "employment_status": "employed",
+    "industry": "Information Technology",
     "occupation": "software developer",
     "car_registration": "12-D-12345",
     "car_value": 15000,
+    "car_seats": 5,
     "car_purchase_date": "15-06-2023",
     "estimated_mileage": 10000,
     "business_use": False,
