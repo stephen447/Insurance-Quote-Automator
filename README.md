@@ -16,7 +16,7 @@ A Python automation tool that fills out insurance quote forms on Irish insurance
 - **AXA Insurance** - Automated quote generation
 - **Allianz Insurance** - Automates the main journey and records monthly/annual prices
 - **AA Insurance** - Automates the supported main-driver happy path and records quote cards
-- **FBD Insurance** - Automates the supported single-driver path on Your Details
+- **FBD Insurance** - Automates About You and Vehicle Details (steps 1 and 2)
 
 ## Requirements
 
@@ -94,7 +94,7 @@ pre-commit run --all-files
    # AA only (automates the supported main-driver happy path)
    SELECTED_PROVIDERS = ("aa",)
 
-   # FBD only (automates the supported Your Details path)
+   # FBD only (automates About You and Vehicle Details)
    SELECTED_PROVIDERS = ("fbd",)
 
    # Both companies
@@ -153,7 +153,7 @@ insurance-quote-automator/
 |-- main.py                 # Main entry point with personal info configuration
 |-- companies/
 |   |-- aa.py              # AA Insurance automation logic
-|   |-- fbd.py             # FBD Insurance journey boilerplate
+|   |-- fbd.py             # FBD Insurance steps 1 and 2 automation
 |   |-- an_post.py         # An Post Insurance automation logic
 |-- helper_functions/
 |   |-- aa.py              # AA-specific helper functions

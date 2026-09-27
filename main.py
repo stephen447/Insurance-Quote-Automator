@@ -59,6 +59,9 @@ PERSONAL_INFO = {
     "is_imported": False,
     "registered_owner": "proposer",
     "car_usage": "social",
+    "registered_outside_ireland_uk": False,
+    "indemnity_to_employer": False,
+    "employer_name": "",
     "car_has_modifications": False,
     "address": {
         "street": "123 main street",
