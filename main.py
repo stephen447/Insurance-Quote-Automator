@@ -10,12 +10,14 @@ import companies.aa as aa
 import companies.allianz as allianz
 import companies.an_post as an_post
 import companies.axa as axa
+import companies.fbd as fbd
 
 PROVIDERS = {
     "aa": ("AA Insurance", aa.run),
     "an-post": ("An Post Insurance", an_post.run),
     "allianz": ("Allianz Insurance", allianz.run),
     "axa": ("AXA Insurance", axa.run),
+    "fbd": ("FBD Insurance", fbd.run),
 }
 
 # Select the companies to run here.
@@ -24,8 +26,9 @@ PROVIDERS = {
 #   ("an-post",)        - An Post only
 #   ("allianz",)        - Allianz only (automation in progress)
 #   ("axa",)            - AXA only
+#   ("fbd",)            - FBD journey boilerplate
 #   ("an-post", "axa") - multiple companies
-SELECTED_PROVIDERS = ("aa",)
+SELECTED_PROVIDERS = ("fbd",)
 
 # Personal information dictionary
 PERSONAL_INFO = {
@@ -39,6 +42,7 @@ PERSONAL_INFO = {
     "employment_status": "employed",
     "industry": "Information Technology",
     "occupation": "software developer",
+    "has_part_time_occupation": False,
     "car_registration": "12-D-12345",
     "car_value": 15000,
     "car_seats": 5,
@@ -55,6 +59,7 @@ PERSONAL_INFO = {
     "is_imported": False,
     "registered_owner": "proposer",
     "car_usage": "social",
+    "car_has_modifications": False,
     "address": {
         "street": "123 main street",
         "city": "malahide",
@@ -78,12 +83,19 @@ PERSONAL_INFO = {
     "country_of_most_recent_ncd": "ireland",
     "previous_insurer": "allianz",
     "policy_start_date": "01-10-2026",
+    "current_policy_end_date": "30-09-2026",
     "car_parked_at_home": True,
     "existing_allianz_policy": False,
+    "existing_fbd_household_policy": False,
     "same_as_current_policy_end_date": True,
     "payment_type": "full",
     # Additional Drivers
     "add_additional_driver": False,
+    # Underwriting
+    "has_disqualification": False,
+    "has_pending_convictions": False,
+    "has_medical_condition": False,
+    "has_insurance_cancelled": False,
     # Marketing
     "marketing_consent": False,
     "phone_consent": False,
